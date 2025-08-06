@@ -1,0 +1,48 @@
+name: Build Release
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Extract tag version
+        id: vars
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Update plugin version
+        run: |
+          tag="${{ steps.vars.outputs.tag }}"
+          sed -i -E "s/^(\s*\* Version:\s*).*/\1${tag}/" printed-product-customizer.php
+          sed -i -E "s/(define\('FPC_VERSION', ')[^']+(');)/\1${tag}\2/" printed-product-customizer.php
+
+      - name: Commit updated version
+        run: |
+          tag="${{ steps.vars.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          email="41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "$email"
+          git add printed-product-customizer.php
+          git commit -m "Update plugin version to ${tag}"
+          remote_prefix="https://x-access-token:${{ github.token }}@github.com"
+          remote="${remote_prefix}/${{ github.repository }}"
+          git remote set-url origin "$remote"
+          git push origin HEAD:${{ github.event.repository.default_branch }}
+
+      - name: Create zip
+        run: |
+          tag="${{ steps.vars.outputs.tag }}"
+          zip -r "printed-product-customizer-${tag}.zip" . -x '*.git*' '*.github*'
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: printed-product-customizer-${{ steps.vars.outputs.tag }}.zip
+          draft: false
