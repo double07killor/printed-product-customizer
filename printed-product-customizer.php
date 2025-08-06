@@ -62,3 +62,12 @@ function fpc_init() {
     require_once FPC_PLUGIN_DIR . 'includes/class-variation-pricing.php';
     require_once FPC_PLUGIN_DIR . 'includes/helpers.php';
 }
+
+// Enqueue admin scripts
+add_action('admin_enqueue_scripts', 'fpc_admin_scripts');
+function fpc_admin_scripts($hook) {
+    if (strpos($hook, 'woocommerce') === false && !in_array($hook, ['post.php', 'post-new.php'], true)) {
+        return;
+    }
+    wp_enqueue_script('fpc-admin', FPC_PLUGIN_URL . 'admin/assets/admin.js', ['jquery'], FPC_VERSION, true);
+}
