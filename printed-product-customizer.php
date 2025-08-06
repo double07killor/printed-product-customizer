@@ -54,6 +54,7 @@ function fpc_init() {
         require_once FPC_PLUGIN_DIR . 'admin/product-tab-subgroups.php';
         require_once FPC_PLUGIN_DIR . 'admin/product-tab-3mf-mapping.php';
         require_once FPC_PLUGIN_DIR . 'admin/product-tab-text-zones.php';
+        require_once FPC_PLUGIN_DIR . 'admin/product-tab-logo-zones.php';
     }
 
     // Core logic
