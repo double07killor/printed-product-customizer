@@ -17,6 +17,60 @@ function fpc_register_filament_menu() {
 }
 
 /**
+ * Extract the spreadsheet ID and gid from a Google Sheets URL.
+ */
+function fpc_parse_google_sheet_url($url) {
+    $sheet_id = '';
+    $gid      = '';
+
+    if (preg_match('#/d/([a-zA-Z0-9-_]+)#', $url, $matches)) {
+        $sheet_id = $matches[1];
+    }
+    if (preg_match('#gid=([0-9]+)#', $url, $matches)) {
+        $gid = $matches[1];
+    }
+
+    return [
+        'sheet_id' => $sheet_id,
+        'gid'      => $gid,
+    ];
+}
+
+/**
+ * Look up the sheet (tab) title using a spreadsheet ID, gid, and API key.
+ */
+function fpc_get_sheet_title_from_gid($sheet_id, $gid, $api_key) {
+    if (empty($sheet_id) || empty($gid) || empty($api_key)) {
+        return '';
+    }
+
+    $url = sprintf(
+        'https://sheets.googleapis.com/v4/spreadsheets/%s?fields=sheets.properties&key=%s',
+        rawurlencode($sheet_id),
+        rawurlencode($api_key)
+    );
+
+    $response = wp_remote_get($url);
+    if (is_wp_error($response)) {
+        return '';
+    }
+
+    $data = json_decode(wp_remote_retrieve_body($response), true);
+    if (empty($data['sheets'])) {
+        return '';
+    }
+
+    foreach ($data['sheets'] as $sheet) {
+        $props = $sheet['properties'] ?? [];
+        if ((string) ($props['sheetId'] ?? '') === (string) $gid) {
+            return $props['title'] ?? '';
+        }
+    }
+
+    return '';
+}
+
+/**
  * Render the Filament Inventory admin page.
  */
 function fpc_render_filament_inventory_page() {
@@ -26,9 +80,20 @@ function fpc_render_filament_inventory_page() {
 
     // Save settings
     if (isset($_POST['fpc_save_filament_settings']) && check_admin_referer('fpc_save_filament_settings')) {
-        update_option('fpc_google_api_key', sanitize_text_field($_POST['fpc_google_api_key'] ?? ''));
-        update_option('fpc_google_sheet_id', sanitize_text_field($_POST['fpc_google_sheet_id'] ?? ''));
-        update_option('fpc_google_sheet_range', sanitize_text_field($_POST['fpc_google_sheet_range'] ?? ''));
+        $api_key   = sanitize_text_field($_POST['fpc_google_api_key'] ?? '');
+        $sheet_url = sanitize_text_field($_POST['fpc_google_sheet_url'] ?? '');
+
+        update_option('fpc_google_api_key', $api_key);
+        update_option('fpc_google_sheet_url', $sheet_url);
+
+        $parsed    = fpc_parse_google_sheet_url($sheet_url);
+        $sheet_id  = $parsed['sheet_id'] ?? '';
+        $gid       = $parsed['gid'] ?? '';
+
+        update_option('fpc_google_sheet_id', $sheet_id);
+        $sheet_title = fpc_get_sheet_title_from_gid($sheet_id, $gid, $api_key);
+        update_option('fpc_google_sheet_range', $sheet_title);
+
         echo '<div class="updated"><p>' . esc_html__('Settings saved.', 'printed-product-customizer') . '</p></div>';
     }
 
@@ -43,9 +108,8 @@ function fpc_render_filament_inventory_page() {
         }
     }
 
-    $api_key = get_option('fpc_google_api_key', '');
-    $sheet_id = get_option('fpc_google_sheet_id', '');
-    $range = get_option('fpc_google_sheet_range', 'Sheet1');
+    $api_key   = get_option('fpc_google_api_key', '');
+    $sheet_url = get_option('fpc_google_sheet_url', '');
     $inventory = get_option('fpc_filament_inventory', []);
 
     echo '<div class="wrap">';
@@ -58,10 +122,8 @@ function fpc_render_filament_inventory_page() {
     echo '<table class="form-table"><tbody>';
     echo '<tr><th><label for="fpc_google_api_key">' . esc_html__('API Key', 'printed-product-customizer') . '</label></th>';
     echo '<td><input type="text" class="regular-text" id="fpc_google_api_key" name="fpc_google_api_key" value="' . esc_attr($api_key) . '"></td></tr>';
-    echo '<tr><th><label for="fpc_google_sheet_id">' . esc_html__('Sheet ID', 'printed-product-customizer') . '</label></th>';
-    echo '<td><input type="text" class="regular-text" id="fpc_google_sheet_id" name="fpc_google_sheet_id" value="' . esc_attr($sheet_id) . '"></td></tr>';
-    echo '<tr><th><label for="fpc_google_sheet_range">' . esc_html__('Range or Tab', 'printed-product-customizer') . '</label></th>';
-    echo '<td><input type="text" class="regular-text" id="fpc_google_sheet_range" name="fpc_google_sheet_range" value="' . esc_attr($range) . '"></td></tr>';
+    echo '<tr><th><label for="fpc_google_sheet_url">' . esc_html__('Sheet URL', 'printed-product-customizer') . '</label></th>';
+    echo '<td><input type="text" class="regular-text" id="fpc_google_sheet_url" name="fpc_google_sheet_url" value="' . esc_attr($sheet_url) . '"></td></tr>';
     echo '</tbody></table>';
     echo '<p><input type="submit" name="fpc_save_filament_settings" class="button button-secondary" value="' . esc_attr__('Save Settings', 'printed-product-customizer') . '"></p>';
     echo '</form>';
