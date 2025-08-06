@@ -21,7 +21,7 @@ jobs:
         run: |
           tag="${{ steps.vars.outputs.tag }}"
           sed -i -E "s/^(\s*\* Version:\s*).*/\1${tag}/" printed-product-customizer.php
-          sed -i -E "s/(define\('FPC_VERSION', ')[^']+(');)/\1${tag}\2/" printed-product-customizer.php
+          sed -i -E "s/(define\('FPC_VERSION', ')[^']+('\);)/\1${tag}\2/" printed-product-customizer.php
 
       - name: Commit updated version
         run: |
