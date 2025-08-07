@@ -253,9 +253,17 @@ function fpc_filament_groups_save($post_id) {
     if (isset($_POST['fpc_filament_groups']) && is_array($_POST['fpc_filament_groups'])) {
         $groups = [];
         foreach ($_POST['fpc_filament_groups'] as $group) {
+            $label = sanitize_text_field($group['label'] ?? '');
+            $key   = sanitize_title($group['key'] ?? '');
+
+            // Skip completely empty rows (e.g. the hidden template)
+            if ($label === '' && $key === '') {
+                continue;
+            }
+
             $groups[] = [
-                'label'           => sanitize_text_field($group['label'] ?? ''),
-                'key'             => sanitize_title($group['key'] ?? ''),
+                'label'           => $label,
+                'key'             => $key,
                 'required'        => !empty($group['required']) ? 1 : 0,
                 'default_filament'=> sanitize_text_field($group['default_filament'] ?? ''),
                 'materials'       => array_map('sanitize_text_field', $group['materials'] ?? []),
@@ -271,7 +279,11 @@ function fpc_filament_groups_save($post_id) {
                 'max_price_per_kg'=> floatval($group['max_price_per_kg'] ?? $group['max_price'] ?? 0),
             ];
         }
-        update_post_meta($post_id, '_fpc_filament_groups', $groups);
+        if (!empty($groups)) {
+            update_post_meta($post_id, '_fpc_filament_groups', $groups);
+        } else {
+            delete_post_meta($post_id, '_fpc_filament_groups');
+        }
     } else {
         delete_post_meta($post_id, '_fpc_filament_groups');
     }
@@ -284,25 +296,32 @@ function fpc_filament_groups_save($post_id) {
 
     if (isset($_POST['fpc_additional_group_rules']) && is_array($_POST['fpc_additional_group_rules'])) {
         $group = $_POST['fpc_additional_group_rules'];
-        $rules = [
-            'label'           => sanitize_text_field($group['label'] ?? ''),
-            'key'             => sanitize_title($group['key'] ?? ''),
-            'required'        => !empty($group['required']) ? 1 : 0,
-            'default_filament'=> sanitize_text_field($group['default_filament'] ?? ''),
-            'materials'       => array_map('sanitize_text_field', $group['materials'] ?? []),
-            'filament_whitelist' => array_map('sanitize_text_field', $group['filament_whitelist'] ?? []),
-            'filament_blacklist' => array_map('sanitize_text_field', $group['filament_blacklist'] ?? []),
-            'exempt_all_filaments' => !empty($group['exempt_all_filaments']) ? 1 : 0,
-            'exempt_filaments' => array_map('sanitize_text_field', $group['exempt_filaments'] ?? []),
-            'allow_override'  => !empty($group['allow_override']) ? 1 : 0,
-            'override_message'=> sanitize_text_field($group['override_message'] ?? ''),
-            'override_surcharge' => floatval($group['override_surcharge'] ?? 0),
-            'waste_grams'     => floatval($group['waste_grams'] ?? 0),
-            'apply_exotic_fee'=> !empty($group['apply_exotic_fee']) ? 1 : 0,
-            'max_price_per_kg'=> floatval($group['max_price_per_kg'] ?? $group['max_price'] ?? 0),
-            'additional_group_fee' => floatval($group['additional_group_fee'] ?? 0),
-        ];
-        update_post_meta($post_id, '_fpc_additional_group_rules', $rules);
+        $label = sanitize_text_field($group['label'] ?? '');
+        $key   = sanitize_title($group['key'] ?? '');
+
+        if ($label === '' && $key === '') {
+            delete_post_meta($post_id, '_fpc_additional_group_rules');
+        } else {
+            $rules = [
+                'label'               => $label,
+                'key'                 => $key,
+                'required'            => !empty($group['required']) ? 1 : 0,
+                'default_filament'    => sanitize_text_field($group['default_filament'] ?? ''),
+                'materials'           => array_map('sanitize_text_field', $group['materials'] ?? []),
+                'filament_whitelist'  => array_map('sanitize_text_field', $group['filament_whitelist'] ?? []),
+                'filament_blacklist'  => array_map('sanitize_text_field', $group['filament_blacklist'] ?? []),
+                'exempt_all_filaments'=> !empty($group['exempt_all_filaments']) ? 1 : 0,
+                'exempt_filaments'    => array_map('sanitize_text_field', $group['exempt_filaments'] ?? []),
+                'allow_override'      => !empty($group['allow_override']) ? 1 : 0,
+                'override_message'    => sanitize_text_field($group['override_message'] ?? ''),
+                'override_surcharge'  => floatval($group['override_surcharge'] ?? 0),
+                'waste_grams'         => floatval($group['waste_grams'] ?? 0),
+                'apply_exotic_fee'    => !empty($group['apply_exotic_fee']) ? 1 : 0,
+                'max_price_per_kg'    => floatval($group['max_price_per_kg'] ?? $group['max_price'] ?? 0),
+                'additional_group_fee'=> floatval($group['additional_group_fee'] ?? 0),
+            ];
+            update_post_meta($post_id, '_fpc_additional_group_rules', $rules);
+        }
     } else {
         delete_post_meta($post_id, '_fpc_additional_group_rules');
     }
