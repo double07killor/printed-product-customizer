@@ -52,6 +52,7 @@ jQuery(function($){
         }
         container.append(template);
         updateFilamentOptions(template);
+        updateGroupTitle(template);
         $(document.body).trigger('wc-enhanced-select-init');
     }
 
@@ -96,6 +97,50 @@ jQuery(function($){
         $whitelist.val(whitelistVal.filter(function(v){ return $whitelist.find('option[value="'+v+'"]').length; })).trigger('change');
     }
 
+    function updateGroupTitle($row){
+        var label = $row.find('.fpc-generate-key').val();
+        if(!label){
+            label = $row.data('default-title') || 'Group';
+        }
+        $row.find('.fpc-group-title').text(label);
+    }
+
+    function initAdditionalGroupRules(data){
+        var $container = $('#fpc-additional-rules');
+        if($container.data('initialized')){
+            return;
+        }
+        var template = $('.fpc-repeatable-container .fpc-template').first().clone();
+        template.removeClass('fpc-template').addClass('fpc-additional-row').show();
+        var label = $container.data('label') || 'Additional Group Rules';
+        template.attr('data-default-title', label);
+        template.find('.fpc-group-title').text(label);
+        template.find('.fpc-repeatable-remove').remove();
+        template.find(':input').each(function(){
+            var name = $(this).attr('name');
+            if(name){
+                name = name.replace('fpc_filament_groups[__INDEX__]', 'fpc_additional_group_rules');
+                $(this).attr('name', name);
+                var match = name.match(/\[([^\]]+)\]$/);
+                var key = match ? match[1] : null;
+                if(key && typeof data[key] !== 'undefined'){
+                    if($(this).is(':checkbox')){
+                        $(this).prop('checked', data[key] == 1);
+                    } else if($(this).is('select[multiple]')){
+                        $(this).val(data[key]);
+                    } else {
+                        $(this).val(data[key]);
+                    }
+                }
+            }
+        });
+        $container.append(template);
+        updateFilamentOptions(template);
+        updateGroupTitle(template);
+        $(document.body).trigger('wc-enhanced-select-init');
+        $container.data('initialized', true);
+    }
+
     $('.fpc-repeatable-add').on('click', function(e){
         e.preventDefault();
         var container = $(this).closest('.fpc-repeatable-wrapper').find('.fpc-repeatable-container');
@@ -109,10 +154,12 @@ jQuery(function($){
 
     $(document).on('keyup change', '.fpc-generate-key', function(){
         var $label = $(this);
-        var $key = $label.closest('.fpc-repeatable-row').find('.fpc-key-field');
+        var $row = $label.closest('.fpc-repeatable-row');
+        var $key = $row.find('.fpc-key-field');
         if(!$key.data('edited')){
             $key.val($label.val().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''));
         }
+        updateGroupTitle($row);
     });
     $(document).on('change', '.fpc-key-field', function(){
         $(this).data('edited', true);
@@ -124,8 +171,24 @@ jQuery(function($){
 
     $('.fpc-repeatable-row').each(function(){
         updateFilamentOptions($(this));
+        updateGroupTitle($(this));
     });
     $(document.body).trigger('wc-enhanced-select-init');
+
+    $(document).on('click', '.fpc-group-toggle', function(e){
+        e.preventDefault();
+        $(this).next('.fpc-group-fields').slideToggle();
+    });
+
+    $('.fpc-additional-rules-toggle').on('click', function(e){
+        e.preventDefault();
+        initAdditionalGroupRules(window.fpcAdditionalGroupRules || {});
+        $('#fpc-additional-rules').toggle();
+    });
+
+    if(window.fpcAdditionalGroupRules && Object.keys(window.fpcAdditionalGroupRules).length){
+        initAdditionalGroupRules(window.fpcAdditionalGroupRules);
+    }
 
     function addPriceRow(container){
         var template = container.find('.fpc-template').first().clone();
