@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Printed Product Customizer
  * Description: A WooCommerce extension to enable customizable 3D printed products with filament-aware configuration, text input zones, and 3MF integration.
- * Version: 0.1.5
+ * Version: 0.1.6
  * Author: Fortney Engineering
  * Text Domain: printed-product-customizer
  * Domain Path: /languages
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('FPC_VERSION', '0.1.5');
+define('FPC_VERSION', '0.1.6');
 define('FPC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FPC_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FPC_PLUGIN_FILE', __FILE__);
