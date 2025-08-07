@@ -231,20 +231,7 @@ jQuery(function($){
         $(this).closest('.fpc-repeatable-row').find('.fpc-group-fields').first().slideToggle();
     });
 
-    $('.fpc-additional-rules-toggle').on('click', function(e){
-        e.preventDefault();
-        initAdditionalGroupRules(window.fpcAdditionalGroupRules || {});
-        var $container = $('#fpc-additional-rules');
-        $container.slideToggle(function(){
-            if($container.is(':visible')){
-                $(document.body).trigger('wc-enhanced-select-init');
-            }
-        });
-    });
-
-    if(window.fpcAdditionalGroupRules && Object.keys(window.fpcAdditionalGroupRules).length){
-        initAdditionalGroupRules(window.fpcAdditionalGroupRules);
-    }
+    initAdditionalGroupRules(window.fpcAdditionalGroupRules || {});
 
     function addPriceRow(container){
         var template = container.find('.fpc-template').first().clone();

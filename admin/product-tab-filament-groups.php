@@ -236,8 +236,7 @@ function fpc_filament_groups_product_data_panel() {
                     <?php endfor; ?>
                 </select>
             </p>
-            <p><button type="button" class="button fpc-additional-rules-toggle"><?php _e('Additional Group Rules', 'printed-product-customizer'); ?></button></p>
-            <div id="fpc-additional-rules" data-label="<?php esc_attr_e('Additional Group Rules', 'printed-product-customizer'); ?>" style="display:none;"></div>
+            <div id="fpc-additional-rules" data-label="<?php esc_attr_e('Additional Group Rules', 'printed-product-customizer'); ?>"></div>
         </div>
     </div>
     <script type="text/javascript">
