@@ -28,7 +28,6 @@ function fpc_render_logo_page() {
             $layers = FPC_SVG_Logo::parse_svg_layers($sanitized);
 
             $label = sanitize_text_field($_POST['fpc_logo_label'] ?? '');
-            $price = floatval($_POST['fpc_logo_price'] ?? 0);
             $slug  = sanitize_title(pathinfo($_FILES['fpc_logo_file']['name'], PATHINFO_FILENAME));
 
             $upload_dir = wp_upload_dir();
@@ -41,9 +40,8 @@ function fpc_render_logo_page() {
 
             $logos = get_option('fpc_predefined_logos', []);
             $logos[$slug] = [
-                'label'           => $label ?: $slug,
-                'priceAdjustment' => $price,
-                'layers'          => $layers,
+                'label'  => $label ?: $slug,
+                'layers' => $layers,
             ];
             update_option('fpc_predefined_logos', $logos);
 
@@ -63,8 +61,6 @@ function fpc_render_logo_page() {
     echo '<td><input type="text" id="fpc_logo_label" name="fpc_logo_label" class="regular-text" /></td></tr>';
     echo '<tr><th><label for="fpc_logo_file">' . esc_html__('SVG File', 'printed-product-customizer') . '</label></th>';
     echo '<td><input type="file" id="fpc_logo_file" name="fpc_logo_file" accept=".svg" /></td></tr>';
-    echo '<tr><th><label for="fpc_logo_price">' . esc_html__('Price Adjustment', 'printed-product-customizer') . '</label></th>';
-    echo '<td><input type="number" step="any" id="fpc_logo_price" name="fpc_logo_price" /></td></tr>';
     echo '</tbody></table>';
     echo '<p><input type="submit" name="fpc_upload_logo" class="button button-primary" value="' . esc_attr__('Upload', 'printed-product-customizer') . '" /></p>';
     echo '</form>';
@@ -74,7 +70,6 @@ function fpc_render_logo_page() {
         echo '<th>' . esc_html__('Slug', 'printed-product-customizer') . '</th>';
         echo '<th>' . esc_html__('Label', 'printed-product-customizer') . '</th>';
         echo '<th>' . esc_html__('Layers', 'printed-product-customizer') . '</th>';
-        echo '<th>' . esc_html__('Price Adj.', 'printed-product-customizer') . '</th>';
         echo '</tr></thead><tbody>';
         foreach ($logos as $slug => $data) {
             $count = count($data['layers']);
@@ -82,7 +77,6 @@ function fpc_render_logo_page() {
             echo '<td>' . esc_html($slug) . '</td>';
             echo '<td>' . esc_html($data['label'] ?? '') . '</td>';
             echo '<td>' . esc_html($count) . '</td>';
-            echo '<td>' . esc_html($data['priceAdjustment'] ?? 0) . '</td>';
             echo '</tr>';
         }
         echo '</tbody></table>';

@@ -60,4 +60,29 @@ jQuery(function($){
         e.preventDefault();
         $(this).closest('.fpc-price-row').remove();
     });
+
+    function addOptionRow(container){
+        var template = container.find('.fpc-template').first().clone();
+        template.removeClass('fpc-template').show();
+        var index = container.find('.fpc-option-row').length - 1;
+        template.find(':input, select').each(function(){
+            var name = $(this).attr('name');
+            if(name){
+                name = name.replace('__OPT_INDEX__', index);
+                $(this).attr('name', name);
+            }
+        });
+        container.append(template);
+    }
+
+    $(document).on('click', '.fpc-option-add', function(e){
+        e.preventDefault();
+        var container = $(this).closest('.fpc-option-wrapper').find('.fpc-option-container');
+        addOptionRow(container);
+    });
+
+    $(document).on('click', '.fpc-option-remove', function(e){
+        e.preventDefault();
+        $(this).closest('.fpc-option-row').remove();
+    });
 });
