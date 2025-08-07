@@ -61,15 +61,17 @@ function fpc_filament_groups_product_data_panel() {
                             <input type="checkbox" name="fpc_filament_groups[__INDEX__][required]" value="1" />
                         </p>
                         <p class="form-field">
-                            <label><?php _e('Default Filament', 'printed-product-customizer'); ?></label>
-                            <select class="fpc-default-filament wc-enhanced-select" style="width:100%;" name="fpc_filament_groups[__INDEX__][default_filament]"></select>
-                        </p>
-                        <p class="form-field">
                             <label><?php _e('Allowed Materials', 'printed-product-customizer'); ?></label>
                             <select class="fpc-materials wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[__INDEX__][materials][]">
                                 <?php foreach ($materials_list as $mat) : ?>
-                                    <option value="<?php echo esc_attr($mat); ?>"><?php echo esc_html($mat); ?></option>
+                                    <option value="<?php echo esc_attr($mat); ?>" <?php selected($mat, 'PETG'); ?>><?php echo esc_html($mat); ?></option>
                                 <?php endforeach; ?>
+                            </select>
+                        </p>
+                        <p class="form-field">
+                            <label><?php _e('Default Filament', 'printed-product-customizer'); ?></label>
+                            <select class="fpc-default-filament wc-enhanced-select" style="width:100%;" name="fpc_filament_groups[__INDEX__][default_filament]">
+                                <option value="psm-m-bk-petg" selected></option>
                             </select>
                         </p>
                         <p class="form-field">
@@ -136,19 +138,19 @@ function fpc_filament_groups_product_data_panel() {
                             }, ARRAY_FILTER_USE_BOTH);
                             ?>
                             <p class="form-field">
+                                <label><?php _e('Allowed Materials', 'printed-product-customizer'); ?></label>
+                                <select class="fpc-materials wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][materials][]">
+                                    <?php foreach ($materials_list as $mat) : ?>
+                                        <option value="<?php echo esc_attr($mat); ?>" <?php selected(in_array($mat, $materials, true)); ?>><?php echo esc_html($mat); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </p>
+                            <p class="form-field">
                                 <label><?php _e('Default Filament', 'printed-product-customizer'); ?></label>
                                 <select class="fpc-default-filament wc-enhanced-select" style="width:100%;" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][default_filament]">
                                     <option value=""></option>
                                     <?php foreach ($filtered_no_blacklist as $slug => $item) : ?>
                                         <option value="<?php echo esc_attr($slug); ?>" <?php selected($group['default_filament'] ?? '', $slug); ?>><?php echo esc_html($slug); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </p>
-                            <p class="form-field">
-                                <label><?php _e('Allowed Materials', 'printed-product-customizer'); ?></label>
-                                <select class="fpc-materials wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][materials][]">
-                                    <?php foreach ($materials_list as $mat) : ?>
-                                        <option value="<?php echo esc_attr($mat); ?>" <?php selected(in_array($mat, $materials, true)); ?>><?php echo esc_html($mat); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </p>
