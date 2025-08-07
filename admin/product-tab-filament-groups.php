@@ -23,6 +23,16 @@ function fpc_filament_groups_product_data_panel() {
     if (!is_array($groups)) {
         $groups = [];
     }
+    $sync      = new FPC_Filament_Sync();
+    $inventory = $sync->get_inventory();
+    $materials_list = [];
+    foreach ($inventory as $item) {
+        if (!empty($item['material'])) {
+            $materials_list[$item['material']] = true;
+        }
+    }
+    $materials_list = array_keys($materials_list);
+    sort($materials_list);
     ?>
     <div id="fpc_filament_groups_panel" class="panel woocommerce_options_panel hidden">
         <div class="fpc-repeatable-wrapper">
@@ -41,26 +51,37 @@ function fpc_filament_groups_product_data_panel() {
                         <input type="checkbox" name="fpc_filament_groups[__INDEX__][required]" value="1" />
                     </p>
                     <p class="form-field">
-                        <label><?php _e('Additional Group', 'printed-product-customizer'); ?></label>
-                        <input type="checkbox" name="fpc_filament_groups[__INDEX__][additional]" value="1" />
-                    </p>
-                    <p class="form-field">
                         <label><?php _e('Default Filament', 'printed-product-customizer'); ?></label>
-                        <input type="text" class="short" name="fpc_filament_groups[__INDEX__][default_filament]" />
+                        <select class="fpc-default-filament wc-enhanced-select" style="width:100%;" name="fpc_filament_groups[__INDEX__][default_filament]"></select>
                     </p>
                     <p class="form-field">
                         <label><?php _e('Allowed Materials', 'printed-product-customizer'); ?></label>
-                        <label><input type="checkbox" name="fpc_filament_groups[__INDEX__][materials][]" value="PETG" /> PETG</label>
-                        <label><input type="checkbox" name="fpc_filament_groups[__INDEX__][materials][]" value="TPU" /> TPU</label>
-                        <label><input type="checkbox" name="fpc_filament_groups[__INDEX__][materials][]" value="PLA" /> PLA</label>
+                        <select class="fpc-materials wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[__INDEX__][materials][]">
+                            <?php foreach ($materials_list as $mat) : ?>
+                                <option value="<?php echo esc_attr($mat); ?>"><?php echo esc_html($mat); ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </p>
                     <p class="form-field">
-                        <label><?php _e('Color Whitelist (slugs)', 'printed-product-customizer'); ?></label>
-                        <input type="text" class="short" name="fpc_filament_groups[__INDEX__][color_whitelist]" />
+                        <label><?php _e('Filament Whitelist', 'printed-product-customizer'); ?></label>
+                        <select class="fpc-filament-whitelist wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[__INDEX__][filament_whitelist][]"></select>
+                        <span class="description"><?php _e('Leave empty to allow all', 'printed-product-customizer'); ?></span>
                     </p>
                     <p class="form-field">
-                        <label><?php _e('Color Blacklist (slugs)', 'printed-product-customizer'); ?></label>
-                        <input type="text" class="short" name="fpc_filament_groups[__INDEX__][color_blacklist]" />
+                        <label><?php _e('Allow Override', 'printed-product-customizer'); ?></label>
+                        <input type="checkbox" name="fpc_filament_groups[__INDEX__][allow_override]" value="1" />
+                    </p>
+                    <p class="form-field">
+                        <label><?php _e('Override Message', 'printed-product-customizer'); ?></label>
+                        <input type="text" class="short" name="fpc_filament_groups[__INDEX__][override_message]" />
+                    </p>
+                    <p class="form-field">
+                        <label><?php _e('Override Surcharge', 'printed-product-customizer'); ?></label>
+                        <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][override_surcharge]" />
+                    </p>
+                    <p class="form-field">
+                        <label><?php _e('Filament Blacklist', 'printed-product-customizer'); ?></label>
+                        <select class="fpc-filament-blacklist wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[__INDEX__][filament_blacklist][]"></select>
                     </p>
                     <p class="form-field">
                         <label><?php _e('Base Grams', 'printed-product-customizer'); ?></label>
@@ -73,10 +94,6 @@ function fpc_filament_groups_product_data_panel() {
                     <p class="form-field">
                         <label><?php _e('Max Price/kg before surcharge', 'printed-product-customizer'); ?></label>
                         <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][max_price]" />
-                    </p>
-                    <p class="form-field">
-                        <label><?php _e('Changeover Fee', 'printed-product-customizer'); ?></label>
-                        <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][changeover_fee]" />
                     </p>
                     <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                 </div>
@@ -94,28 +111,62 @@ function fpc_filament_groups_product_data_panel() {
                             <label><?php _e('Required', 'printed-product-customizer'); ?></label>
                             <input type="checkbox" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][required]" value="1" <?php checked(!empty($group['required'])); ?> />
                         </p>
-                        <p class="form-field">
-                            <label><?php _e('Additional Group', 'printed-product-customizer'); ?></label>
-                            <input type="checkbox" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][additional]" value="1" <?php checked(!empty($group['additional'])); ?> />
-                        </p>
+                        <?php
+                        $materials  = $group['materials'] ?? [];
+                        $blacklist  = $group['filament_blacklist'] ?? [];
+                        $whitelist  = $group['filament_whitelist'] ?? [];
+                        $filtered   = array_filter($inventory, function($item) use ($materials) {
+                            return empty($materials) || in_array($item['material'], $materials, true);
+                        });
+                        $filtered_no_blacklist = array_filter($filtered, function($item, $slug) use ($blacklist) {
+                            return !in_array($slug, $blacklist, true);
+                        }, ARRAY_FILTER_USE_BOTH);
+                        ?>
                         <p class="form-field">
                             <label><?php _e('Default Filament', 'printed-product-customizer'); ?></label>
-                            <input type="text" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][default_filament]" value="<?php echo esc_attr($group['default_filament'] ?? ''); ?>" />
+                            <select class="fpc-default-filament wc-enhanced-select" style="width:100%;" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][default_filament]">
+                                <option value=""></option>
+                                <?php foreach ($filtered_no_blacklist as $slug => $item) : ?>
+                                    <option value="<?php echo esc_attr($slug); ?>" <?php selected($group['default_filament'] ?? '', $slug); ?>><?php echo esc_html($slug); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </p>
                         <p class="form-field">
                             <label><?php _e('Allowed Materials', 'printed-product-customizer'); ?></label>
-                            <?php $materials = $group['materials'] ?? []; ?>
-                            <label><input type="checkbox" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][materials][]" value="PETG" <?php checked(in_array('PETG', $materials, true)); ?> /> PETG</label>
-                            <label><input type="checkbox" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][materials][]" value="TPU" <?php checked(in_array('TPU', $materials, true)); ?> /> TPU</label>
-                            <label><input type="checkbox" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][materials][]" value="PLA" <?php checked(in_array('PLA', $materials, true)); ?> /> PLA</label>
+                            <select class="fpc-materials wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][materials][]">
+                                <?php foreach ($materials_list as $mat) : ?>
+                                    <option value="<?php echo esc_attr($mat); ?>" <?php selected(in_array($mat, $materials, true)); ?>><?php echo esc_html($mat); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </p>
                         <p class="form-field">
-                            <label><?php _e('Color Whitelist (slugs)', 'printed-product-customizer'); ?></label>
-                            <input type="text" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][color_whitelist]" value="<?php echo esc_attr($group['color_whitelist'] ?? ''); ?>" />
+                            <label><?php _e('Filament Whitelist', 'printed-product-customizer'); ?></label>
+                            <select class="fpc-filament-whitelist wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][filament_whitelist][]">
+                                <?php foreach ($filtered_no_blacklist as $slug => $item) : ?>
+                                    <option value="<?php echo esc_attr($slug); ?>" <?php selected(in_array($slug, $whitelist, true)); ?>><?php echo esc_html($slug); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <span class="description"><?php _e('Leave empty to allow all', 'printed-product-customizer'); ?></span>
                         </p>
                         <p class="form-field">
-                            <label><?php _e('Color Blacklist (slugs)', 'printed-product-customizer'); ?></label>
-                            <input type="text" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][color_blacklist]" value="<?php echo esc_attr($group['color_blacklist'] ?? ''); ?>" />
+                            <label><?php _e('Allow Override', 'printed-product-customizer'); ?></label>
+                            <input type="checkbox" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][allow_override]" value="1" <?php checked(!empty($group['allow_override'])); ?> />
+                        </p>
+                        <p class="form-field">
+                            <label><?php _e('Override Message', 'printed-product-customizer'); ?></label>
+                            <input type="text" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][override_message]" value="<?php echo esc_attr($group['override_message'] ?? ''); ?>" />
+                        </p>
+                        <p class="form-field">
+                            <label><?php _e('Override Surcharge', 'printed-product-customizer'); ?></label>
+                            <input type="number" step="any" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][override_surcharge]" value="<?php echo esc_attr($group['override_surcharge'] ?? ''); ?>" />
+                        </p>
+                        <p class="form-field">
+                            <label><?php _e('Filament Blacklist', 'printed-product-customizer'); ?></label>
+                            <select class="fpc-filament-blacklist wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][filament_blacklist][]">
+                                <?php foreach ($filtered as $slug => $item) : ?>
+                                    <option value="<?php echo esc_attr($slug); ?>" <?php selected(in_array($slug, $blacklist, true)); ?>><?php echo esc_html($slug); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </p>
                         <p class="form-field">
                             <label><?php _e('Base Grams', 'printed-product-customizer'); ?></label>
@@ -129,10 +180,6 @@ function fpc_filament_groups_product_data_panel() {
                             <label><?php _e('Max Price/kg before surcharge', 'printed-product-customizer'); ?></label>
                             <input type="number" step="any" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][max_price]" value="<?php echo esc_attr($group['max_price'] ?? ''); ?>" />
                         </p>
-                        <p class="form-field">
-                            <label><?php _e('Changeover Fee', 'printed-product-customizer'); ?></label>
-                            <input type="number" step="any" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][changeover_fee]" value="<?php echo esc_attr($group['changeover_fee'] ?? ''); ?>" />
-                        </p>
                         <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                     </div>
                 <?php endforeach; ?>
@@ -140,6 +187,9 @@ function fpc_filament_groups_product_data_panel() {
             <p><button type="button" class="button fpc-repeatable-add"><?php _e('Add Filament Group', 'printed-product-customizer'); ?></button></p>
         </div>
     </div>
+    <script type="text/javascript">
+        window.fpcFilamentInventory = <?php echo wp_json_encode($inventory); ?>;
+    </script>
     <?php
 }
 
@@ -153,15 +203,16 @@ function fpc_filament_groups_save($post_id) {
                 'label'           => sanitize_text_field($group['label'] ?? ''),
                 'key'             => sanitize_title($group['key'] ?? ''),
                 'required'        => !empty($group['required']) ? 1 : 0,
-                'additional'      => !empty($group['additional']) ? 1 : 0,
                 'default_filament'=> sanitize_text_field($group['default_filament'] ?? ''),
                 'materials'       => array_map('sanitize_text_field', $group['materials'] ?? []),
-                'color_whitelist' => sanitize_text_field($group['color_whitelist'] ?? ''),
-                'color_blacklist' => sanitize_text_field($group['color_blacklist'] ?? ''),
+                'filament_whitelist' => array_map('sanitize_text_field', $group['filament_whitelist'] ?? []),
+                'filament_blacklist' => array_map('sanitize_text_field', $group['filament_blacklist'] ?? []),
+                'allow_override'  => !empty($group['allow_override']) ? 1 : 0,
+                'override_message'=> sanitize_text_field($group['override_message'] ?? ''),
+                'override_surcharge' => floatval($group['override_surcharge'] ?? 0),
                 'base_grams'      => floatval($group['base_grams'] ?? 0),
                 'waste_grams'     => floatval($group['waste_grams'] ?? 0),
                 'max_price'       => floatval($group['max_price'] ?? 0),
-                'changeover_fee'  => floatval($group['changeover_fee'] ?? 0),
             ];
         }
         update_post_meta($post_id, '_fpc_filament_groups', $groups);

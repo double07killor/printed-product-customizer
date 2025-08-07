@@ -1,6 +1,37 @@
 jQuery(function($){
     console.log('Printed Product Customizer admin loaded');
 
+    function initTagInputs($inputs){
+        $inputs.each(function(){
+            var $input = $(this);
+            var options = $input.data('options') || [];
+            if(typeof options === 'string'){
+                try { options = JSON.parse(options); } catch(e){ options = options.split(','); }
+            }
+            function split(val){ return val.split(/,\s*/); }
+            function extractLast(term){ return split(term).pop(); }
+            $input.on('keydown', function(event){
+                if(event.keyCode === $.ui.keyCode.TAB && $input.autocomplete('instance') && $input.autocomplete('instance').menu.active){
+                    event.preventDefault();
+                }
+            }).autocomplete({
+                minLength:0,
+                source:function(request, response){
+                    response($.ui.autocomplete.filter(options, extractLast(request.term)));
+                },
+                focus:function(){ return false; },
+                select:function(event, ui){
+                    var terms = split(this.value);
+                    terms.pop();
+                    terms.push(ui.item.value);
+                    terms.push('');
+                    this.value = terms.join(', ');
+                    return false;
+                }
+            });
+        });
+    }
+
     function addRow(container, data){
         var template = container.find('.fpc-template').first().clone();
         template.removeClass('fpc-template').show();
@@ -20,6 +51,49 @@ jQuery(function($){
             template.find('.fpc-finish-field').val(data.finish || '');
         }
         container.append(template);
+        updateFilamentOptions(template);
+        $(document.body).trigger('wc-enhanced-select-init');
+    }
+
+    function updateFilamentOptions($row){
+        var inventory = window.fpcFilamentInventory || {};
+        var materials = $row.find('.fpc-materials').val() || [];
+        var blacklist = $row.find('.fpc-filament-blacklist').val() || [];
+
+        function buildOptions(filter){
+            var html = '';
+            $.each(inventory, function(slug, data){
+                if(materials.length && materials.indexOf(data.material) === -1){
+                    return;
+                }
+                if(filter && !filter(slug)){
+                    return;
+                }
+                html += '<option value="'+slug+'">'+slug+'</option>';
+            });
+            return html;
+        }
+
+        var blacklistOptions = buildOptions();
+        var $blacklist = $row.find('.fpc-filament-blacklist');
+        var blacklistVal = $blacklist.val() || [];
+        $blacklist.html(blacklistOptions).val(blacklistVal).trigger('change');
+
+        var filterFn = function(slug){ return blacklist.indexOf(slug) === -1; };
+        var filteredOptions = buildOptions(filterFn);
+
+        var $default = $row.find('.fpc-default-filament');
+        var defaultVal = $default.val();
+        $default.html('<option value=""></option>'+filteredOptions);
+        if(defaultVal && $default.find('option[value="'+defaultVal+'"]').length){
+            $default.val(defaultVal);
+        }
+        $default.trigger('change');
+
+        var $whitelist = $row.find('.fpc-filament-whitelist');
+        var whitelistVal = $whitelist.val() || [];
+        $whitelist.html(filteredOptions);
+        $whitelist.val(whitelistVal.filter(function(v){ return $whitelist.find('option[value="'+v+'"]').length; })).trigger('change');
     }
 
     $('.fpc-repeatable-add').on('click', function(e){
@@ -43,6 +117,15 @@ jQuery(function($){
     $(document).on('change', '.fpc-key-field', function(){
         $(this).data('edited', true);
     });
+
+    $(document).on('change', '.fpc-materials, .fpc-filament-blacklist', function(){
+        updateFilamentOptions($(this).closest('.fpc-repeatable-row'));
+    });
+
+    $('.fpc-repeatable-row').each(function(){
+        updateFilamentOptions($(this));
+    });
+    $(document.body).trigger('wc-enhanced-select-init');
 
     function addPriceRow(container){
         var template = container.find('.fpc-template').first().clone();
@@ -108,4 +191,5 @@ jQuery(function($){
             }
         });
     });
+    initTagInputs($('.fpc-tag-input'));
 });
