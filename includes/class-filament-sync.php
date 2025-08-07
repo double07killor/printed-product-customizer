@@ -16,7 +16,7 @@ class FPC_Filament_Sync {
      * Perform a sync from Google Sheets and store the result in a site option.
      *
      * Expects the sheet to contain a header row with the following columns:
-     * slug, material, price_per_kg, stock_grams, color, texture
+     * slug, brand, material, price_per_kg, stock_grams, color, Color, texture, transparency
      *
      * @return array|WP_Error Parsed inventory array on success or WP_Error on failure.
      */
@@ -35,7 +35,16 @@ class FPC_Filament_Sync {
         if (is_wp_error($rows)) {
             return $rows;
         }
-        $headers = array_map('sanitize_key', array_shift($rows));
+
+        $raw_headers = array_shift($rows);
+        $headers     = [];
+        foreach ($raw_headers as $header) {
+            $key = sanitize_key($header);
+            if ($header === 'Color') {
+                $key = 'color_display';
+            }
+            $headers[] = $key;
+        }
         $inventory = [];
 
         foreach ($rows as $row) {
@@ -47,12 +56,19 @@ class FPC_Filament_Sync {
                 continue;
             }
 
+            $transparency = isset($item['transparency']) && $item['transparency'] !== '' ? (float) $item['transparency'] : 0;
+            $opacity      = 1 - max(0, min(100, $transparency)) / 100;
+
             $inventory[$item['slug']] = [
+                'brand'        => $item['brand'] ?? '',
                 'material'     => $item['material'] ?? '',
                 'price_per_kg' => (float) ($item['price_per_kg'] ?? 0),
                 'stock_grams'  => (float) ($item['stock_grams'] ?? 0),
                 'color'        => $item['color'] ?? '',
+                'color_name'   => $item['color_display'] ?? '',
                 'texture'      => $item['texture'] ?? '',
+                'transparency' => $transparency,
+                'opacity'      => $opacity,
             ];
         }
 

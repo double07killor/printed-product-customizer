@@ -130,21 +130,28 @@ function fpc_render_filament_inventory_page() {
         echo '<table class="widefat">';
         echo '<thead><tr>';
         echo '<th>' . esc_html__('Slug', 'printed-product-customizer') . '</th>';
+        echo '<th>' . esc_html__('Brand', 'printed-product-customizer') . '</th>';
         echo '<th>' . esc_html__('Material', 'printed-product-customizer') . '</th>';
         echo '<th>' . esc_html__('Price/kg', 'printed-product-customizer') . '</th>';
         echo '<th>' . esc_html__('Stock (g)', 'printed-product-customizer') . '</th>';
         echo '<th>' . esc_html__('Color', 'printed-product-customizer') . '</th>';
+        echo '<th>' . esc_html__('Color Name', 'printed-product-customizer') . '</th>';
+        echo '<th>' . esc_html__('Transparency', 'printed-product-customizer') . '</th>';
         echo '<th>' . esc_html__('Texture', 'printed-product-customizer') . '</th>';
         echo '</tr></thead><tbody>';
 
         foreach ($inventory as $slug => $data) {
             echo '<tr>';
             echo '<td>' . esc_html($slug) . '</td>';
+            echo '<td>' . esc_html($data['brand'] ?? '') . '</td>';
             echo '<td>' . esc_html($data['material'] ?? '') . '</td>';
             echo '<td>' . esc_html($data['price_per_kg'] ?? '') . '</td>';
             echo '<td>' . esc_html($data['stock_grams'] ?? '') . '</td>';
-            $color = $data['color'] ?? '';
-            echo '<td><span style="display:inline-block;width:20px;height:20px;background:' . esc_attr($color) . ';"></span> ' . esc_html($color) . '</td>';
+            $color   = $data['color'] ?? '';
+            $opacity = isset($data['opacity']) ? $data['opacity'] : 1;
+            echo '<td><span style="display:inline-block;width:20px;height:20px;background:' . esc_attr($color) . ';opacity:' . esc_attr($opacity) . ';"></span> ' . esc_html($color) . '</td>';
+            echo '<td>' . esc_html($data['color_name'] ?? '') . '</td>';
+            echo '<td>' . esc_html($data['transparency'] ?? '') . '</td>';
             echo '<td>' . esc_html($data['texture'] ?? '') . '</td>';
             echo '</tr>';
         }
