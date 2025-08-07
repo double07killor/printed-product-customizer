@@ -112,10 +112,12 @@ function fpc_3mf_mapping_product_data_panel() {
 
 add_action('woocommerce_process_product_meta', 'fpc_3mf_mapping_save');
 function fpc_3mf_mapping_save($post_id) {
+    error_log('fpc_3mf_mapping_save: start for post ' . $post_id);
     $existing_files = get_post_meta($post_id, '_fpc_3mf_files', true);
     $existing_files = is_array($existing_files) ? $existing_files : [];
 
     if (!empty($_FILES['fpc_3mf_files']['name'][0])) {
+        error_log('fpc_3mf_mapping_save: files received ' . print_r($_FILES['fpc_3mf_files']['name'], true));
         $uploaded = [];
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
@@ -141,12 +143,16 @@ function fpc_3mf_mapping_save($post_id) {
                     $attach_id = wp_insert_attachment($attachment, $movefile['file'], $post_id);
                     wp_update_attachment_metadata($attach_id, wp_generate_attachment_metadata($attach_id, $movefile['file']));
                     $uploaded[] = $attach_id;
+                    error_log('fpc_3mf_mapping_save: uploaded ' . $name . ' as attachment ' . $attach_id);
+                } else {
+                    error_log('fpc_3mf_mapping_save: error uploading ' . $name . ' - ' . $movefile['error']);
                 }
             }
         }
         if ($uploaded) {
             $existing_files = array_merge($existing_files, $uploaded);
             update_post_meta($post_id, '_fpc_3mf_files', $existing_files);
+            error_log('fpc_3mf_mapping_save: files saved ' . implode(',', $existing_files));
         }
     }
 
@@ -204,12 +210,14 @@ function fpc_3mf_ajax_save_files() {
     }
 
     $post_id = intval($_POST['post_id']);
+    error_log('fpc_3mf_ajax_save_files: start for post ' . $post_id);
 
     $existing_files = get_post_meta($post_id, '_fpc_3mf_files', true);
     $existing_files = is_array($existing_files) ? $existing_files : [];
 
     $uploaded = [];
     if (!empty($_FILES['fpc_3mf_files']['name'][0])) {
+        error_log('fpc_3mf_ajax_save_files: files received ' . print_r($_FILES['fpc_3mf_files']['name'], true));
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
         $files = $_FILES['fpc_3mf_files'];
@@ -234,6 +242,9 @@ function fpc_3mf_ajax_save_files() {
                     $attach_id = wp_insert_attachment($attachment, $movefile['file'], $post_id);
                     wp_update_attachment_metadata($attach_id, wp_generate_attachment_metadata($attach_id, $movefile['file']));
                     $uploaded[] = $attach_id;
+                    error_log('fpc_3mf_ajax_save_files: uploaded ' . $name . ' as attachment ' . $attach_id);
+                } else {
+                    error_log('fpc_3mf_ajax_save_files: error uploading ' . $name . ' - ' . $movefile['error']);
                 }
             }
         }
@@ -242,6 +253,7 @@ function fpc_3mf_ajax_save_files() {
     if ($uploaded) {
         $existing_files = array_merge($existing_files, $uploaded);
         update_post_meta($post_id, '_fpc_3mf_files', $existing_files);
+        error_log('fpc_3mf_ajax_save_files: files saved ' . implode(',', $existing_files));
     }
 
     $bodies = fpc_3mf_collect_bodies($existing_files);
@@ -270,6 +282,7 @@ function fpc_3mf_ajax_save_files() {
 
     update_post_meta($post_id, '_fpc_body_assignments', $assignments);
 
+    error_log('fpc_3mf_ajax_save_files: returning success with ' . count($assignments) . ' assignments');
     wp_send_json_success([
         'message'     => __('3MF files saved', 'printed-product-customizer'),
         'assignments' => $assignments,

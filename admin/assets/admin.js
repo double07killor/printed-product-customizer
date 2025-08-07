@@ -301,6 +301,8 @@ jQuery(function($){
         var btn = $(this);
         var panel = $('#fpc_3mf_mapping_panel');
         var filesInput = panel.find('input[name="fpc_3mf_files[]"]')[0];
+        console.log('fpc-save-3mf: clicked');
+        console.log('fpc-save-3mf: files selected', filesInput && filesInput.files ? filesInput.files.length : 0);
         var formData = new FormData();
         formData.append('action', 'fpc_save_3mf_files');
         formData.append('post_id', $('#post_ID').val());
@@ -311,6 +313,7 @@ jQuery(function($){
         }
         btn.prop('disabled', true);
         panel.find('.fpc-save-notice').hide();
+        console.log('fpc-save-3mf: sending ajax');
         $.ajax({
             url: ajaxurl,
             type: 'POST',
@@ -319,6 +322,7 @@ jQuery(function($){
             contentType: false,
             success: function(resp){
                 btn.prop('disabled', false);
+                console.log('fpc-save-3mf: response', resp);
                 if(resp.success){
                     var container = panel.find('.fpc-repeatable-container');
                     container.find('.fpc-repeatable-row').not('.fpc-template').remove();
@@ -330,8 +334,9 @@ jQuery(function($){
                     panel.find('.fpc-save-notice').text(resp.data && resp.data.message ? resp.data.message : 'Error').show();
                 }
             },
-            error: function(){
+            error: function(err){
                 btn.prop('disabled', false);
+                console.error('fpc-save-3mf: ajax error', err);
                 panel.find('.fpc-save-notice').text('Error').show();
             }
         });
@@ -344,8 +349,10 @@ jQuery(function($){
         var formData = new FormData();
         formData.append('action', 'fpc_update_bodies');
         formData.append('post_id', $('#post_ID').val());
+        console.log('fpc-update-bodies: clicked');
         btn.prop('disabled', true);
         panel.find('.fpc-save-notice').hide();
+        console.log('fpc-update-bodies: sending ajax');
         $.ajax({
             url: ajaxurl,
             type: 'POST',
@@ -354,6 +361,7 @@ jQuery(function($){
             contentType: false,
             success: function(resp){
                 btn.prop('disabled', false);
+                console.log('fpc-update-bodies: response', resp);
                 if(resp.success){
                     var container = panel.find('.fpc-repeatable-container');
                     container.find('.fpc-repeatable-row').not('.fpc-template').remove();
@@ -365,8 +373,9 @@ jQuery(function($){
                     panel.find('.fpc-save-notice').text(resp.data && resp.data.message ? resp.data.message : 'Error').show();
                 }
             },
-            error: function(){
+            error: function(err){
                 btn.prop('disabled', false);
+                console.error('fpc-update-bodies: ajax error', err);
                 panel.find('.fpc-save-notice').text('Error').show();
             }
         });
