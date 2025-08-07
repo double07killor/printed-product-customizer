@@ -78,7 +78,6 @@ function fpc_text_zones_product_data_panel() {
                             <?php endif; endforeach; ?>
                         </select>
                     </p>
-                    <p class="form-field"><label><?php _e('Changeover Fee', 'printed-product-customizer'); ?></label><input type="number" step="any" class="short" name="fpc_text_zones[__INDEX__][changeover_fee]" /></p>
                     <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                 </div>
                 <?php foreach ($zones as $index => $zone) : ?>
@@ -127,7 +126,6 @@ function fpc_text_zones_product_data_panel() {
                                 <?php endif; endforeach; ?>
                             </select>
                         </p>
-                        <p class="form-field"><label><?php _e('Changeover Fee', 'printed-product-customizer'); ?></label><input type="number" step="any" class="short" name="fpc_text_zones[<?php echo esc_attr($index); ?>][changeover_fee]" value="<?php echo esc_attr($zone['changeover_fee'] ?? ''); ?>" /></p>
                         <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                     </div>
                 <?php endforeach; ?>
