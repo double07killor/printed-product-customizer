@@ -109,7 +109,7 @@ function fpc_filament_groups_product_data_panel() {
                         </p>
                         <p class="form-field">
                             <label><?php _e('Apply Exotic Surcharge', 'printed-product-customizer'); ?></label>
-                            <input type="checkbox" name="fpc_filament_groups[__INDEX__][apply_exotic_fee]" value="1" />
+                            <input type="checkbox" name="fpc_filament_groups[__INDEX__][apply_exotic_fee]" value="1" checked="checked" />
                         </p>
                         <p class="form-field">
                             <label><?php _e('Max Free Price/kg', 'printed-product-customizer'); ?></label>
