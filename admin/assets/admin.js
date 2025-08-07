@@ -56,6 +56,7 @@ jQuery(function($){
         container.append(template);
         updateFilamentOptions(template);
         updateGroupTitle(template);
+        toggleExemptFilaments(template);
         $(document.body).trigger('wc-enhanced-select-init');
     }
 
@@ -98,6 +99,11 @@ jQuery(function($){
         var whitelistVal = $whitelist.val() || [];
         $whitelist.html(filteredOptions);
         $whitelist.val(whitelistVal.filter(function(v){ return $whitelist.find('option[value="'+v+'"]').length; })).trigger('change');
+
+        var $exempt = $row.find('.fpc-exempt-filaments');
+        var exemptVal = $exempt.val() || [];
+        $exempt.html(filteredOptions);
+        $exempt.val(exemptVal.filter(function(v){ return $exempt.find('option[value="'+v+'"]').length; })).trigger('change');
     }
 
     function updateGroupTitle($row){
@@ -144,6 +150,7 @@ jQuery(function($){
         $container.append(template);
         updateFilamentOptions(template);
         updateGroupTitle(template);
+        toggleExemptFilaments(template);
         $(document.body).trigger('wc-enhanced-select-init');
         $container.data('initialized', true);
     }
@@ -176,9 +183,27 @@ jQuery(function($){
         updateFilamentOptions($(this).closest('.fpc-repeatable-row'));
     });
 
+    function toggleExemptFilaments($row){
+        var $all = $row.find('.fpc-exempt-all');
+        var $field = $row.find('.fpc-exempt-filaments-field');
+        var $select = $row.find('.fpc-exempt-filaments');
+        if($all.is(':checked')){
+            $select.prop('disabled', true);
+            $field.hide();
+        } else {
+            $select.prop('disabled', false);
+            $field.show();
+        }
+    }
+
+    $(document).on('change', '.fpc-exempt-all', function(){
+        toggleExemptFilaments($(this).closest('.fpc-repeatable-row'));
+    });
+
     $('.fpc-repeatable-row').each(function(){
         updateFilamentOptions($(this));
         updateGroupTitle($(this));
+        toggleExemptFilaments($(this));
     });
     $(document.body).trigger('wc-enhanced-select-init');
 
