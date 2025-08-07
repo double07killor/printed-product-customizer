@@ -74,7 +74,7 @@ function fpc_admin_scripts($hook) {
     if (strpos($hook, 'woocommerce') === false && !in_array($hook, ['post.php', 'post-new.php'], true)) {
         return;
     }
-    wp_enqueue_script('fpc-admin', FPC_PLUGIN_URL . 'admin/assets/admin.js', ['jquery'], FPC_VERSION, true);
+    wp_enqueue_script('fpc-admin', FPC_PLUGIN_URL . 'admin/assets/admin.js', ['jquery', 'jquery-ui-autocomplete'], FPC_VERSION, true);
 }
 
 // Allow SVG uploads for logo management

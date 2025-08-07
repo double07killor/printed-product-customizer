@@ -1,6 +1,37 @@
 jQuery(function($){
     console.log('Printed Product Customizer admin loaded');
 
+    function initTagInputs($inputs){
+        $inputs.each(function(){
+            var $input = $(this);
+            var options = $input.data('options') || [];
+            if(typeof options === 'string'){
+                try { options = JSON.parse(options); } catch(e){ options = options.split(','); }
+            }
+            function split(val){ return val.split(/,\s*/); }
+            function extractLast(term){ return split(term).pop(); }
+            $input.on('keydown', function(event){
+                if(event.keyCode === $.ui.keyCode.TAB && $input.autocomplete('instance') && $input.autocomplete('instance').menu.active){
+                    event.preventDefault();
+                }
+            }).autocomplete({
+                minLength:0,
+                source:function(request, response){
+                    response($.ui.autocomplete.filter(options, extractLast(request.term)));
+                },
+                focus:function(){ return false; },
+                select:function(event, ui){
+                    var terms = split(this.value);
+                    terms.pop();
+                    terms.push(ui.item.value);
+                    terms.push('');
+                    this.value = terms.join(', ');
+                    return false;
+                }
+            });
+        });
+    }
+
     function addRow(container){
         var template = container.find('.fpc-template').first().clone();
         template.removeClass('fpc-template').show();
@@ -112,4 +143,6 @@ jQuery(function($){
         e.preventDefault();
         $(this).closest('.fpc-price-row').remove();
     });
+
+    initTagInputs($('.fpc-tag-input'));
 });

@@ -29,6 +29,7 @@ function fpc_subgroups_product_data_panel() {
             $filament_opts[$fg['key']] = $fg['label'];
         }
     }
+    $filament_keys_json = esc_attr(wp_json_encode(array_keys($filament_opts)));
     ?>
     <div id="fpc_subgroups_panel" class="panel woocommerce_options_panel hidden">
         <div class="fpc-repeatable-wrapper">
@@ -44,19 +45,11 @@ function fpc_subgroups_product_data_panel() {
                     </p>
                     <p class="form-field">
                         <label><?php _e('Allowed Filament Groups', 'printed-product-customizer'); ?></label>
-                        <select multiple="multiple" name="fpc_subgroups[__INDEX__][allowed][]">
-                            <?php foreach ($filament_opts as $k => $l) : ?>
-                                <option value="<?php echo esc_attr($k); ?>"><?php echo esc_html($l); ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <input type="text" class="fpc-tag-input" data-options="<?php echo $filament_keys_json; ?>" name="fpc_subgroups[__INDEX__][allowed]" />
                     </p>
                     <p class="form-field">
                         <label><?php _e('Allow Additional Groups', 'printed-product-customizer'); ?></label>
                         <input type="checkbox" name="fpc_subgroups[__INDEX__][allow_additional]" value="1" />
-                    </p>
-                    <p class="form-field">
-                        <label><?php _e('Forced Filament Group', 'printed-product-customizer'); ?></label>
-                        <select name="fpc_subgroups[__INDEX__][forced]"><option value=""><?php _e('None', 'printed-product-customizer'); ?></option><?php foreach ($filament_opts as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>"><?php echo esc_html($l); ?></option><?php endforeach; ?></select>
                     </p>
                     <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                 </div>
@@ -72,24 +65,12 @@ function fpc_subgroups_product_data_panel() {
                         </p>
                         <p class="form-field">
                             <label><?php _e('Allowed Filament Groups', 'printed-product-customizer'); ?></label>
-                            <select multiple="multiple" name="fpc_subgroups[<?php echo esc_attr($index); ?>][allowed][]">
-                                <?php $allowed = $sg['allowed'] ?? []; foreach ($filament_opts as $k => $l) : ?>
-                                    <option value="<?php echo esc_attr($k); ?>" <?php selected(in_array($k, $allowed, true)); ?>><?php echo esc_html($l); ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <?php $allowed = isset($sg['allowed']) && is_array($sg['allowed']) ? implode(', ', $sg['allowed']) : ''; ?>
+                            <input type="text" class="fpc-tag-input" data-options="<?php echo $filament_keys_json; ?>" name="fpc_subgroups[<?php echo esc_attr($index); ?>][allowed]" value="<?php echo esc_attr($allowed); ?>" />
                         </p>
                         <p class="form-field">
                             <label><?php _e('Allow Additional Groups', 'printed-product-customizer'); ?></label>
                             <input type="checkbox" name="fpc_subgroups[<?php echo esc_attr($index); ?>][allow_additional]" value="1" <?php checked(!empty($sg['allow_additional'])); ?> />
-                        </p>
-                        <p class="form-field">
-                            <label><?php _e('Forced Filament Group', 'printed-product-customizer'); ?></label>
-                            <select name="fpc_subgroups[<?php echo esc_attr($index); ?>][forced]">
-                                <option value=""><?php _e('None', 'printed-product-customizer'); ?></option>
-                                <?php foreach ($filament_opts as $k => $l) : ?>
-                                    <option value="<?php echo esc_attr($k); ?>" <?php selected(isset($sg['forced']) && $sg['forced'] === $k); ?>><?php echo esc_html($l); ?></option>
-                                <?php endforeach; ?>
-                            </select>
                         </p>
                         <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                     </div>
@@ -106,12 +87,13 @@ function fpc_subgroups_save($post_id) {
     if (isset($_POST['fpc_subgroups']) && is_array($_POST['fpc_subgroups'])) {
         $subgroups = [];
         foreach ($_POST['fpc_subgroups'] as $sg) {
+            $allowed_raw = $sg['allowed'] ?? '';
+            $allowed = array_filter(array_map('sanitize_text_field', array_map('trim', explode(',', $allowed_raw))));
             $subgroups[] = [
                 'label'           => sanitize_text_field($sg['label'] ?? ''),
                 'key'             => sanitize_title($sg['key'] ?? ''),
-                'allowed'         => array_map('sanitize_text_field', $sg['allowed'] ?? []),
+                'allowed'         => $allowed,
                 'allow_additional'=> !empty($sg['allow_additional']) ? 1 : 0,
-                'forced'          => sanitize_text_field($sg['forced'] ?? ''),
             ];
         }
         update_post_meta($post_id, '_fpc_subgroups', $subgroups);
