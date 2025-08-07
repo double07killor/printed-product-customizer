@@ -167,6 +167,7 @@ jQuery(function($){
             template.find('.fpc-default-filament').val('psm-m-bk-petg');
         }
         $container.append(template);
+        template.find('.fpc-group-fields').hide();
         updateFilamentOptions(template);
         updateGroupTitle(template);
         toggleExemptFilaments(template);
@@ -229,7 +230,7 @@ jQuery(function($){
 
     $(document).on('click', '.fpc-group-toggle', function(e){
         e.preventDefault();
-        $(this).next('.fpc-group-fields').slideToggle();
+        $(this).closest('.fpc-repeatable-row').find('.fpc-group-fields').first().slideToggle();
     });
 
     initAdditionalGroupRules(window.fpcAdditionalGroupRules || {});
