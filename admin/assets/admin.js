@@ -296,6 +296,31 @@ jQuery(function($){
         $(this).closest('.fpc-option-row').remove();
     });
 
+    function addDesignRow(container){
+        var template = container.find('.fpc-template').first().clone();
+        template.removeClass('fpc-template').show();
+        var index = container.find('.fpc-design-row').length - 1;
+        template.find(':input, select').each(function(){
+            var name = $(this).attr('name');
+            if(name){
+                name = name.replace('__DESIGN_INDEX__', index);
+                $(this).attr('name', name);
+            }
+        });
+        container.append(template);
+    }
+
+    $(document).on('click', '.fpc-design-add', function(e){
+        e.preventDefault();
+        var container = $(this).closest('.fpc-design-wrapper').find('.fpc-design-container');
+        addDesignRow(container);
+    });
+
+    $(document).on('click', '.fpc-design-remove', function(e){
+        e.preventDefault();
+        $(this).closest('.fpc-design-row').remove();
+    });
+
     $('#fpc-save-3mf').on('click', function(e){
         e.preventDefault();
         var btn = $(this);
