@@ -49,9 +49,25 @@ function fpc_logo_zones_product_data_panel() {
                     <p class="form-field"><label><?php _e('BBox Width/Height', 'printed-product-customizer'); ?></label> w<input type="number" step="any" class="short" name="fpc_logo_zones[__INDEX__][bbox][w]" /> h<input type="number" step="any" class="short" name="fpc_logo_zones[__INDEX__][bbox][h]" /></p>
                     <p class="form-field"><label><?php _e('Alignment', 'printed-product-customizer'); ?></label><select name="fpc_logo_zones[__INDEX__][align]"><option value="left">left</option><option value="center">center</option><option value="right">right</option></select></p>
                     <p class="form-field"><label><?php _e('Allowed Logos', 'printed-product-customizer'); ?></label><select multiple="multiple" name="fpc_logo_zones[__INDEX__][allowed_logos][]"><?php foreach ($available_logos as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>"><?php echo esc_html($l); ?></option><?php endforeach; ?></select></p>
-                    <p class="form-field"><label><?php _e('Default Logo', 'printed-product-customizer'); ?></label><select name="fpc_logo_zones[__INDEX__][default_logo]"><option value=""><?php _e('None', 'printed-product-customizer'); ?></option><?php foreach ($available_logos as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>"><?php echo esc_html($l); ?></option><?php endforeach; ?></select></p>
+                    <p class="form-field"><label><?php _e('Default Logo', 'printed-product-customizer'); ?></label><select name="fpc_logo_zones[__INDEX__][default_logo][logo]"><option value=""><?php _e('None', 'printed-product-customizer'); ?></option><?php foreach ($available_logos as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>"><?php echo esc_html($l); ?></option><?php endforeach; ?></select> rot<input type="number" step="any" name="fpc_logo_zones[__INDEX__][default_logo][rotation]" /> scale<input type="number" step="any" name="fpc_logo_zones[__INDEX__][default_logo][scale]" /></p>
                     <p class="form-field"><label><?php _e('Allow Removal?', 'printed-product-customizer'); ?></label><input type="checkbox" name="fpc_logo_zones[__INDEX__][allow_removal]" value="1" /></p>
                     <p class="form-field"><label><?php _e('Allow Swap?', 'printed-product-customizer'); ?></label><input type="checkbox" name="fpc_logo_zones[__INDEX__][allow_swap]" value="1" /></p>
+                    <div class="form-field">
+                        <label><?php _e('Logo Options', 'printed-product-customizer'); ?></label>
+                        <div class="fpc-option-wrapper">
+                            <div class="fpc-option-container">
+                                <div class="fpc-option-row fpc-template" style="display:none;">
+                                    <select name="fpc_logo_zones[__INDEX__][options][__OPT_INDEX__][logo]"><option value=""></option><?php foreach ($available_logos as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>"><?php echo esc_html($l); ?></option><?php endforeach; ?></select>
+                                    rot<input type="number" step="any" name="fpc_logo_zones[__INDEX__][options][__OPT_INDEX__][rotation]" />
+                                    scale<input type="number" step="any" name="fpc_logo_zones[__INDEX__][options][__OPT_INDEX__][scale]" />
+                                    colors<select name="fpc_logo_zones[__INDEX__][options][__OPT_INDEX__][colors]"><option value="single">single</option><option value="dual">dual</option></select>
+                                    price<input type="number" step="any" name="fpc_logo_zones[__INDEX__][options][__OPT_INDEX__][price]" />
+                                    <button type="button" class="button fpc-option-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button>
+                                </div>
+                            </div>
+                            <p><button type="button" class="button fpc-option-add"><?php _e('Add Option', 'printed-product-customizer'); ?></button></p>
+                        </div>
+                    </div>
                     <div class="form-field">
                         <label><?php _e('Price Adjustments', 'printed-product-customizer'); ?></label>
                         <table class="widefat">
@@ -90,9 +106,35 @@ function fpc_logo_zones_product_data_panel() {
                         <p class="form-field"><label><?php _e('BBox Width/Height', 'printed-product-customizer'); ?></label> w<input type="number" step="any" class="short" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][bbox][w]" value="<?php echo esc_attr($zone['bbox']['w'] ?? ''); ?>" /> h<input type="number" step="any" class="short" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][bbox][h]" value="<?php echo esc_attr($zone['bbox']['h'] ?? ''); ?>" /></p>
                         <p class="form-field"><label><?php _e('Alignment', 'printed-product-customizer'); ?></label><select name="fpc_logo_zones[<?php echo esc_attr($index); ?>][align]"><option value="left" <?php selected(($zone['align'] ?? '') === 'left'); ?>>left</option><option value="center" <?php selected(($zone['align'] ?? '') === 'center'); ?>>center</option><option value="right" <?php selected(($zone['align'] ?? '') === 'right'); ?>>right</option></select></p>
                         <p class="form-field"><label><?php _e('Allowed Logos', 'printed-product-customizer'); ?></label><select multiple="multiple" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][allowed_logos][]"><?php foreach ($available_logos as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>" <?php selected(in_array($k, $zone['allowed_logos'] ?? [], true)); ?>><?php echo esc_html($l); ?></option><?php endforeach; ?></select></p>
-                        <p class="form-field"><label><?php _e('Default Logo', 'printed-product-customizer'); ?></label><select name="fpc_logo_zones[<?php echo esc_attr($index); ?>][default_logo]"><option value=""><?php _e('None', 'printed-product-customizer'); ?></option><?php foreach ($available_logos as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>" <?php selected(isset($zone['default_logo']) && $zone['default_logo'] === $k); ?>><?php echo esc_html($l); ?></option><?php endforeach; ?></select></p>
+                        <p class="form-field"><label><?php _e('Default Logo', 'printed-product-customizer'); ?></label><select name="fpc_logo_zones[<?php echo esc_attr($index); ?>][default_logo][logo]"><option value=""><?php _e('None', 'printed-product-customizer'); ?></option><?php foreach ($available_logos as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>" <?php selected(isset($zone['default_logo']['logo']) && $zone['default_logo']['logo'] === $k); ?>><?php echo esc_html($l); ?></option><?php endforeach; ?></select> rot<input type="number" step="any" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][default_logo][rotation]" value="<?php echo esc_attr($zone['default_logo']['rotation'] ?? ''); ?>" /> scale<input type="number" step="any" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][default_logo][scale]" value="<?php echo esc_attr($zone['default_logo']['scale'] ?? ''); ?>" /></p>
                         <p class="form-field"><label><?php _e('Allow Removal?', 'printed-product-customizer'); ?></label><input type="checkbox" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][allow_removal]" value="1" <?php checked(!empty($zone['allow_removal'])); ?> /></p>
                         <p class="form-field"><label><?php _e('Allow Swap?', 'printed-product-customizer'); ?></label><input type="checkbox" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][allow_swap]" value="1" <?php checked(!empty($zone['allow_swap'])); ?> /></p>
+                        <div class="form-field">
+                            <label><?php _e('Logo Options', 'printed-product-customizer'); ?></label>
+                            <div class="fpc-option-wrapper">
+                                <div class="fpc-option-container">
+                                    <div class="fpc-option-row fpc-template" style="display:none;">
+                                        <select name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][__OPT_INDEX__][logo]"><option value=""></option><?php foreach ($available_logos as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>"><?php echo esc_html($l); ?></option><?php endforeach; ?></select>
+                                        rot<input type="number" step="any" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][__OPT_INDEX__][rotation]" />
+                                        scale<input type="number" step="any" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][__OPT_INDEX__][scale]" />
+                                        colors<select name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][__OPT_INDEX__][colors]"><option value="single">single</option><option value="dual">dual</option></select>
+                                        price<input type="number" step="any" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][__OPT_INDEX__][price]" />
+                                        <button type="button" class="button fpc-option-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button>
+                                    </div>
+                                    <?php if (!empty($zone['options'])) : foreach ($zone['options'] as $oi => $op) : ?>
+                                    <div class="fpc-option-row">
+                                        <select name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][<?php echo esc_attr($oi); ?>][logo]"><option value=""></option><?php foreach ($available_logos as $k => $l) : ?><option value="<?php echo esc_attr($k); ?>" <?php selected(($op['logo'] ?? '') === $k); ?>><?php echo esc_html($l); ?></option><?php endforeach; ?></select>
+                                        rot<input type="number" step="any" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][<?php echo esc_attr($oi); ?>][rotation]" value="<?php echo esc_attr($op['rotation'] ?? ''); ?>" />
+                                        scale<input type="number" step="any" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][<?php echo esc_attr($oi); ?>][scale]" value="<?php echo esc_attr($op['scale'] ?? ''); ?>" />
+                                        colors<select name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][<?php echo esc_attr($oi); ?>][colors]"><option value="single" <?php selected(($op['colors'] ?? '') === 'single'); ?>>single</option><option value="dual" <?php selected(($op['colors'] ?? '') === 'dual'); ?>>dual</option></select>
+                                        price<input type="number" step="any" name="fpc_logo_zones[<?php echo esc_attr($index); ?>][options][<?php echo esc_attr($oi); ?>][price]" value="<?php echo esc_attr($op['price'] ?? ''); ?>" />
+                                        <button type="button" class="button fpc-option-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button>
+                                    </div>
+                                    <?php endforeach; endif; ?>
+                                </div>
+                                <p><button type="button" class="button fpc-option-add"><?php _e('Add Option', 'printed-product-customizer'); ?></button></p>
+                            </div>
+                        </div>
                         <div class="form-field">
                             <label><?php _e('Price Adjustments', 'printed-product-customizer'); ?></label>
                             <table class="widefat">
@@ -149,6 +191,18 @@ function fpc_logo_zones_save($post_id) {
                     ];
                 }
             }
+            $options = [];
+            if (!empty($zone['options']) && is_array($zone['options'])) {
+                foreach ($zone['options'] as $op) {
+                    $options[] = [
+                        'logo'     => sanitize_text_field($op['logo'] ?? ''),
+                        'rotation' => floatval($op['rotation'] ?? 0),
+                        'scale'    => floatval($op['scale'] ?? 1),
+                        'colors'   => sanitize_text_field($op['colors'] ?? ''),
+                        'price'    => floatval($op['price'] ?? 0),
+                    ];
+                }
+            }
             $zones[] = [
                 'label'         => sanitize_text_field($zone['label'] ?? ''),
                 'key'           => sanitize_title($zone['key'] ?? ''),
@@ -174,9 +228,14 @@ function fpc_logo_zones_save($post_id) {
                 ],
                 'align'         => sanitize_text_field($zone['align'] ?? ''),
                 'allowed_logos' => array_map('sanitize_text_field', $zone['allowed_logos'] ?? []),
-                'default_logo'  => sanitize_text_field($zone['default_logo'] ?? ''),
+                'default_logo'  => [
+                    'logo'     => sanitize_text_field($zone['default_logo']['logo'] ?? ''),
+                    'rotation' => floatval($zone['default_logo']['rotation'] ?? 0),
+                    'scale'    => floatval($zone['default_logo']['scale'] ?? 1),
+                ],
                 'allow_removal' => !empty($zone['allow_removal']) ? 1 : 0,
                 'allow_swap'    => !empty($zone['allow_swap']) ? 1 : 0,
+                'options'       => $options,
                 'price_adjust'  => $price_adjust,
                 'default_style' => sanitize_text_field($zone['default_style'] ?? ''),
                 'depth'         => [
