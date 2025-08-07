@@ -50,6 +50,7 @@ function fpc_init() {
     // Load admin menus
     if (is_admin()) {
         require_once FPC_PLUGIN_DIR . 'admin/menu-filament.php';
+        require_once FPC_PLUGIN_DIR . 'admin/menu-logos.php';
         require_once FPC_PLUGIN_DIR . 'admin/product-tab-filament-groups.php';
         require_once FPC_PLUGIN_DIR . 'admin/product-tab-subgroups.php';
         require_once FPC_PLUGIN_DIR . 'admin/product-tab-3mf-mapping.php';
@@ -61,6 +62,7 @@ function fpc_init() {
     require_once FPC_PLUGIN_DIR . 'includes/class-filament-sync.php';
     require_once FPC_PLUGIN_DIR . 'includes/class-product-config.php';
     require_once FPC_PLUGIN_DIR . 'includes/class-variation-pricing.php';
+    require_once FPC_PLUGIN_DIR . 'includes/class-svg-logo.php';
     require_once FPC_PLUGIN_DIR . 'includes/helpers.php';
 }
 
@@ -71,4 +73,11 @@ function fpc_admin_scripts($hook) {
         return;
     }
     wp_enqueue_script('fpc-admin', FPC_PLUGIN_URL . 'admin/assets/admin.js', ['jquery'], FPC_VERSION, true);
+}
+
+// Allow SVG uploads for logo management
+add_filter('upload_mimes', 'fpc_allow_svg_upload');
+function fpc_allow_svg_upload($mimes) {
+    $mimes['svg'] = 'image/svg+xml';
+    return $mimes;
 }
