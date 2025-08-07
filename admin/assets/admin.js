@@ -204,18 +204,24 @@ jQuery(function($){
         updateFilamentOptions($(this));
         updateGroupTitle($(this));
         toggleExemptFilaments($(this));
+        $(this).find('.fpc-group-fields').hide();
     });
     $(document.body).trigger('wc-enhanced-select-init');
 
     $(document).on('click', '.fpc-group-toggle', function(e){
         e.preventDefault();
-        $(this).next('.fpc-group-fields').slideToggle();
+        $(this).closest('.fpc-repeatable-row').find('.fpc-group-fields').first().slideToggle();
     });
 
     $('.fpc-additional-rules-toggle').on('click', function(e){
         e.preventDefault();
         initAdditionalGroupRules(window.fpcAdditionalGroupRules || {});
-        $('#fpc-additional-rules').toggle();
+        var $container = $('#fpc-additional-rules');
+        $container.slideToggle(function(){
+            if($container.is(':visible')){
+                $(document.body).trigger('wc-enhanced-select-init');
+            }
+        });
     });
 
     if(window.fpcAdditionalGroupRules && Object.keys(window.fpcAdditionalGroupRules).length){
