@@ -37,32 +37,63 @@ function fpc_3mf_mapping_product_data_panel() {
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
+            <p><button type="button" class="button" id="fpc-save-3mf"><?php _e('Save 3MF Files', 'printed-product-customizer'); ?></button></p>
+            <div class="fpc-save-notice" style="display:none;"></div>
         </div>
-        <div class="options_group">
+        <div class="options_group fpc-repeatable-wrapper">
             <table class="widefat">
-                <thead><tr><th><?php _e('Body Name', 'printed-product-customizer'); ?></th><th><?php _e('Subgroup', 'printed-product-customizer'); ?></th><th></th></tr></thead>
+                <thead>
+                    <tr>
+                        <th><?php _e('Body Name', 'printed-product-customizer'); ?></th>
+                        <th><?php _e('Subgroup', 'printed-product-customizer'); ?></th>
+                        <th><?php _e('No Visualization', 'printed-product-customizer'); ?></th>
+                        <th><?php _e('Non Exported', 'printed-product-customizer'); ?></th>
+                        <th><?php _e('Finish', 'printed-product-customizer'); ?></th>
+                        <th></th>
+                    </tr>
+                </thead>
                 <tbody class="fpc-repeatable-container">
                     <tr class="fpc-repeatable-row fpc-template" style="display:none;">
-                        <td><input type="text" name="fpc_body_assignments[__INDEX__][body]" /></td>
+                        <td><input type="text" class="fpc-body-field" name="fpc_body_assignments[__INDEX__][body]" /></td>
                         <td>
-                            <select name="fpc_body_assignments[__INDEX__][subgroup]">
+                            <select class="fpc-subgroup-field" name="fpc_body_assignments[__INDEX__][subgroup]">
                                 <option value=""><?php _e('None', 'printed-product-customizer'); ?></option>
                                 <?php foreach ($subgroups as $sg) : if (!empty($sg['key'])) : ?>
                                     <option value="<?php echo esc_attr($sg['key']); ?>"><?php echo esc_html($sg['label']); ?></option>
                                 <?php endif; endforeach; ?>
                             </select>
                         </td>
+                        <td style="text-align:center;"><input type="checkbox" class="fpc-no-visualization-field" name="fpc_body_assignments[__INDEX__][no_visualization]" value="1" /></td>
+                        <td style="text-align:center;"><input type="checkbox" class="fpc-non-exported-field" name="fpc_body_assignments[__INDEX__][non_exported]" value="1" /></td>
+                        <td>
+                            <select class="fpc-finish-field" name="fpc_body_assignments[__INDEX__][finish]">
+                                <option value=""></option>
+                                <option value="brass"><?php _e('Brass', 'printed-product-customizer'); ?></option>
+                                <option value="stainless"><?php _e('Stainless', 'printed-product-customizer'); ?></option>
+                                <option value="black_oxide"><?php _e('Black Oxide', 'printed-product-customizer'); ?></option>
+                            </select>
+                        </td>
                         <td><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></td>
                     </tr>
                     <?php foreach ($assignments as $index => $as) : ?>
                         <tr class="fpc-repeatable-row">
-                            <td><input type="text" name="fpc_body_assignments[<?php echo esc_attr($index); ?>][body]" value="<?php echo esc_attr($as['body'] ?? ''); ?>" /></td>
+                            <td><input type="text" class="fpc-body-field" name="fpc_body_assignments[<?php echo esc_attr($index); ?>][body]" value="<?php echo esc_attr($as['body'] ?? ''); ?>" /></td>
                             <td>
-                                <select name="fpc_body_assignments[<?php echo esc_attr($index); ?>][subgroup]">
+                                <select class="fpc-subgroup-field" name="fpc_body_assignments[<?php echo esc_attr($index); ?>][subgroup]">
                                     <option value=""><?php _e('None', 'printed-product-customizer'); ?></option>
                                     <?php foreach ($subgroups as $sg) : if (!empty($sg['key'])) : ?>
                                         <option value="<?php echo esc_attr($sg['key']); ?>" <?php selected(isset($as['subgroup']) && $as['subgroup'] === $sg['key']); ?>><?php echo esc_html($sg['label']); ?></option>
                                     <?php endif; endforeach; ?>
+                                </select>
+                            </td>
+                            <td style="text-align:center;"><input type="checkbox" class="fpc-no-visualization-field" name="fpc_body_assignments[<?php echo esc_attr($index); ?>][no_visualization]" value="1" <?php checked(!empty($as['no_visualization'])); ?> /></td>
+                            <td style="text-align:center;"><input type="checkbox" class="fpc-non-exported-field" name="fpc_body_assignments[<?php echo esc_attr($index); ?>][non_exported]" value="1" <?php checked(!empty($as['non_exported'])); ?> /></td>
+                            <td>
+                                <select class="fpc-finish-field" name="fpc_body_assignments[<?php echo esc_attr($index); ?>][finish]">
+                                    <option value=""></option>
+                                    <option value="brass" <?php selected(isset($as['finish']) && $as['finish'] === 'brass'); ?>><?php _e('Brass', 'printed-product-customizer'); ?></option>
+                                    <option value="stainless" <?php selected(isset($as['finish']) && $as['finish'] === 'stainless'); ?>><?php _e('Stainless', 'printed-product-customizer'); ?></option>
+                                    <option value="black_oxide" <?php selected(isset($as['finish']) && $as['finish'] === 'black_oxide'); ?>><?php _e('Black Oxide', 'printed-product-customizer'); ?></option>
                                 </select>
                             </td>
                             <td><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></td>
@@ -126,8 +157,11 @@ function fpc_3mf_mapping_save($post_id) {
                 continue;
             }
             $assignments[] = [
-                'body'     => sanitize_text_field($as['body']),
-                'subgroup' => sanitize_text_field($as['subgroup'] ?? ''),
+                'body'            => sanitize_text_field($as['body']),
+                'subgroup'        => sanitize_text_field($as['subgroup'] ?? ''),
+                'no_visualization'=> !empty($as['no_visualization']) ? '1' : '',
+                'non_exported'    => !empty($as['non_exported']) ? '1' : '',
+                'finish'          => sanitize_text_field($as['finish'] ?? ''),
             ];
         }
     }
@@ -143,8 +177,11 @@ function fpc_3mf_mapping_save($post_id) {
         }
         if (!$found) {
             $assignments[] = [
-                'body'     => $body_name,
-                'subgroup' => '',
+                'body'            => $body_name,
+                'subgroup'        => '',
+                'no_visualization'=> '',
+                'non_exported'    => '',
+                'finish'          => '',
             ];
         }
     }
@@ -154,6 +191,85 @@ function fpc_3mf_mapping_save($post_id) {
     } else {
         delete_post_meta($post_id, '_fpc_body_assignments');
     }
+}
+
+add_action('wp_ajax_fpc_save_3mf_files', 'fpc_3mf_ajax_save_files');
+function fpc_3mf_ajax_save_files() {
+    if (!current_user_can('edit_products')) {
+        wp_send_json_error(['message' => __('Permission denied', 'printed-product-customizer')]);
+    }
+
+    $post_id = intval($_POST['post_id']);
+
+    $existing_files = get_post_meta($post_id, '_fpc_3mf_files', true);
+    $existing_files = is_array($existing_files) ? $existing_files : [];
+
+    $uploaded = [];
+    if (!empty($_FILES['fpc_3mf_files']['name'][0])) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        $files = $_FILES['fpc_3mf_files'];
+        foreach ($files['name'] as $i => $name) {
+            if ($files['name'][$i]) {
+                $file = [
+                    'name'     => $files['name'][$i],
+                    'type'     => $files['type'][$i],
+                    'tmp_name' => $files['tmp_name'][$i],
+                    'error'    => $files['error'][$i],
+                    'size'     => $files['size'][$i],
+                ];
+                $overrides = ['test_form' => false];
+                $movefile = wp_handle_upload($file, $overrides);
+                if (!isset($movefile['error'])) {
+                    $attachment = [
+                        'post_mime_type' => $movefile['type'],
+                        'post_title'     => sanitize_file_name($name),
+                        'post_content'   => '',
+                        'post_status'    => 'inherit'
+                    ];
+                    $attach_id = wp_insert_attachment($attachment, $movefile['file'], $post_id);
+                    wp_update_attachment_metadata($attach_id, wp_generate_attachment_metadata($attach_id, $movefile['file']));
+                    $uploaded[] = $attach_id;
+                }
+            }
+        }
+    }
+
+    if ($uploaded) {
+        $existing_files = array_merge($existing_files, $uploaded);
+        update_post_meta($post_id, '_fpc_3mf_files', $existing_files);
+    }
+
+    $bodies = fpc_3mf_collect_bodies($existing_files);
+
+    $assignments = get_post_meta($post_id, '_fpc_body_assignments', true);
+    $assignments = is_array($assignments) ? $assignments : [];
+
+    foreach ($bodies as $body_name) {
+        $found = false;
+        foreach ($assignments as $as) {
+            if ($as['body'] === $body_name) {
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            $assignments[] = [
+                'body'            => $body_name,
+                'subgroup'        => '',
+                'no_visualization'=> '',
+                'non_exported'    => '',
+                'finish'          => '',
+            ];
+        }
+    }
+
+    update_post_meta($post_id, '_fpc_body_assignments', $assignments);
+
+    wp_send_json_success([
+        'message'     => __('3MF files saved', 'printed-product-customizer'),
+        'assignments' => $assignments,
+    ]);
 }
 
 function fpc_3mf_collect_bodies($attachment_ids) {
