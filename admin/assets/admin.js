@@ -229,7 +229,7 @@ jQuery(function($){
 
     $(document).on('click', '.fpc-group-toggle', function(e){
         e.preventDefault();
-        $(this).closest('.fpc-repeatable-row').find('.fpc-group-fields').first().slideToggle();
+        $(this).next('.fpc-group-fields').slideToggle();
     });
 
     initAdditionalGroupRules(window.fpcAdditionalGroupRules || {});

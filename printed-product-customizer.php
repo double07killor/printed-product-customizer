@@ -73,6 +73,7 @@ function fpc_admin_scripts($hook) {
     if (strpos($hook, 'woocommerce') === false && !in_array($hook, ['post.php', 'post-new.php'], true)) {
         return;
     }
+    wp_enqueue_style('fpc-admin', FPC_PLUGIN_URL . 'admin/assets/admin.css', [], FPC_VERSION);
     wp_enqueue_script('fpc-admin', FPC_PLUGIN_URL . 'admin/assets/admin.js', ['jquery', 'jquery-ui-autocomplete'], FPC_VERSION, true);
 }
 
