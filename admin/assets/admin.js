@@ -59,6 +59,15 @@ jQuery(function($){
         $(document.body).trigger('wc-enhanced-select-init');
     }
 
+    function refreshEnhancedSelect($el){
+        if ($.fn.selectWoo && $el && $el.length) {
+            if ($el.data('select2')) {
+                $el.selectWoo('destroy');
+            }
+            $el.selectWoo();
+        }
+    }
+
     function updateFilamentOptions($row){
         var inventory = window.fpcFilamentInventory || {};
         var materials = $row.find('.fpc-materials').val() || [];
@@ -81,7 +90,7 @@ jQuery(function($){
         var blacklistOptions = buildOptions();
         var $blacklist = $row.find('.fpc-filament-blacklist');
         var blacklistVal = $blacklist.val() || [];
-        $blacklist.html(blacklistOptions).val(blacklistVal).trigger('change');
+        $blacklist.html(blacklistOptions).val(blacklistVal);
 
         var filterFn = function(slug){ return blacklist.indexOf(slug) === -1; };
         var filteredOptions = buildOptions(filterFn);
@@ -92,17 +101,26 @@ jQuery(function($){
         if(defaultVal && $default.find('option[value="'+defaultVal+'"]').length){
             $default.val(defaultVal);
         }
-        $default.trigger('change');
 
         var $whitelist = $row.find('.fpc-filament-whitelist');
         var whitelistVal = $whitelist.val() || [];
         $whitelist.html(filteredOptions);
-        $whitelist.val(whitelistVal.filter(function(v){ return $whitelist.find('option[value="'+v+'"]').length; })).trigger('change');
+        $whitelist.val(whitelistVal.filter(function(v){ return $whitelist.find('option[value="'+v+'"]').length; }));
 
         var $exempt = $row.find('.fpc-exempt-filaments');
         var exemptVal = $exempt.val() || [];
         $exempt.html(filteredOptions);
-        $exempt.val(exemptVal.filter(function(v){ return $exempt.find('option[value="'+v+'"]').length; })).trigger('change');
+        $exempt.val(exemptVal.filter(function(v){ return $exempt.find('option[value="'+v+'"]').length; }));
+
+        refreshEnhancedSelect($blacklist);
+        refreshEnhancedSelect($default);
+        refreshEnhancedSelect($whitelist);
+        refreshEnhancedSelect($exempt);
+
+        $blacklist.trigger('change');
+        $default.trigger('change');
+        $whitelist.trigger('change');
+        $exempt.trigger('change');
     }
 
     function updateGroupTitle($row){
@@ -179,7 +197,7 @@ jQuery(function($){
         $(this).data('edited', true);
     });
 
-    $(document).on('change', '.fpc-materials, .fpc-filament-blacklist', function(){
+    $(document).on('change select2:select select2:unselect', '.fpc-materials, .fpc-filament-blacklist', function(){
         updateFilamentOptions($(this).closest('.fpc-repeatable-row'));
     });
 
