@@ -107,6 +107,10 @@ function fpc_filament_groups_product_data_panel() {
                             <label><?php _e('Max Price/kg before surcharge', 'printed-product-customizer'); ?></label>
                             <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][max_price]" />
                         </p>
+                        <p class="form-field fpc-additional-fee-field" style="display:none;">
+                            <label><?php _e('Additional Group Fee', 'printed-product-customizer'); ?></label>
+                            <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][additional_group_fee]" />
+                        </p>
                         <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                     </div>
                 </div>
@@ -269,6 +273,7 @@ function fpc_filament_groups_save($post_id) {
             'base_grams'      => floatval($group['base_grams'] ?? 0),
             'waste_grams'     => floatval($group['waste_grams'] ?? 0),
             'max_price'       => floatval($group['max_price'] ?? 0),
+            'additional_group_fee' => floatval($group['additional_group_fee'] ?? 0),
         ];
         update_post_meta($post_id, '_fpc_additional_group_rules', $rules);
     } else {
