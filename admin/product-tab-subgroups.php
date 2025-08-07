@@ -97,15 +97,29 @@ function fpc_subgroups_save($post_id) {
         foreach ($_POST['fpc_subgroups'] as $sg) {
             $allowed_raw = $sg['allowed'] ?? '';
             $allowed = array_filter(array_map('sanitize_text_field', array_map('trim', explode(',', $allowed_raw))));
+            $label = sanitize_text_field($sg['label'] ?? '');
+            $key = sanitize_title($sg['key'] ?? '');
+            $allow_additional = !empty($sg['allow_additional']) ? 1 : 0;
+            $base_grams = floatval($sg['base_grams'] ?? 0);
+
+            if ($label === '' && $key === '' && empty($allowed) && !$allow_additional && $base_grams === 0.0) {
+                continue;
+            }
+
             $subgroups[] = [
-                'label'           => sanitize_text_field($sg['label'] ?? ''),
-                'key'             => sanitize_title($sg['key'] ?? ''),
+                'label'           => $label,
+                'key'             => $key,
                 'allowed'         => $allowed,
-                'allow_additional'=> !empty($sg['allow_additional']) ? 1 : 0,
-                'base_grams'      => floatval($sg['base_grams'] ?? 0),
+                'allow_additional'=> $allow_additional,
+                'base_grams'      => $base_grams,
             ];
         }
-        update_post_meta($post_id, '_fpc_subgroups', $subgroups);
+
+        if (!empty($subgroups)) {
+            update_post_meta($post_id, '_fpc_subgroups', $subgroups);
+        } else {
+            delete_post_meta($post_id, '_fpc_subgroups');
+        }
     } else {
         delete_post_meta($post_id, '_fpc_subgroups');
     }
