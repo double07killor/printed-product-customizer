@@ -53,6 +53,7 @@ jQuery(function($){
             template.find('.fpc-default-filament').val('psm-m-bk-petg');
         }
         container.append(template);
+        template.find('.fpc-group-fields').hide();
         updateFilamentOptions(template);
         updateGroupTitle(template);
         toggleExemptFilaments(template);
@@ -294,8 +295,11 @@ jQuery(function($){
                 $(this).attr('name', name);
             }
         });
-        container.append(template);
-    }
+    container.append(template);
+    template.find('.fpc-group-fields').hide();
+    updateGroupTitle(template);
+    $(document.body).trigger('wc-enhanced-select-init');
+}
 
     $(document).on('click', '.fpc-design-add', function(e){
         e.preventDefault();
