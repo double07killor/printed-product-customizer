@@ -49,6 +49,9 @@ jQuery(function($){
             template.find('.fpc-no-visualization-field').prop('checked', data.no_visualization === '1');
             template.find('.fpc-non-exported-field').prop('checked', data.non_exported === '1');
             template.find('.fpc-finish-field').val(data.finish || '');
+        } else {
+            template.find('.fpc-materials').val(['PETG']);
+            template.find('.fpc-default-filament').val('psm-m-bk-petg');
         }
         container.append(template);
         updateFilamentOptions(template);
@@ -134,6 +137,10 @@ jQuery(function($){
                 }
             }
         });
+        if(!data || $.isEmptyObject(data)){
+            template.find('.fpc-materials').val(['PETG']);
+            template.find('.fpc-default-filament').val('psm-m-bk-petg');
+        }
         $container.append(template);
         updateFilamentOptions(template);
         updateGroupTitle(template);
