@@ -30,6 +30,9 @@ function fpc_render_filament_inventory_page() {
 
         update_option('fpc_google_sheet_url', $sheet_url);
 
+        $exotic_margin = isset($_POST['fpc_exotic_margin']) ? floatval($_POST['fpc_exotic_margin']) : 0;
+        update_option('fpc_exotic_margin', $exotic_margin);
+
         $parts = $sheet_url ? fpc_parse_sheet_url($sheet_url) : false;
         if ($parts) {
             update_option('fpc_google_sheet_id', $parts[0]);
@@ -90,6 +93,7 @@ function fpc_render_filament_inventory_page() {
     }
 
     $sheet_url   = get_option('fpc_google_sheet_url', '');
+    $exotic_margin = get_option('fpc_exotic_margin', 0);
     $inventory   = get_option('fpc_filament_inventory', []);
     $json_path   = get_option('fpc_google_json_path');
     $service_acc = '';
@@ -112,6 +116,8 @@ function fpc_render_filament_inventory_page() {
     echo '<td><input type="text" class="regular-text" id="fpc_google_sheet_url" name="fpc_google_sheet_url" value="' . esc_attr($sheet_url) . '"></td></tr>';
     echo '<tr><th><label for="fpc_google_json">' . esc_html__('Google API JSON Key', 'printed-product-customizer') . '</label></th>';
     echo '<td><input type="file" id="fpc_google_json" name="fpc_google_json" accept="application/json"></td></tr>';
+    echo '<tr><th><label for="fpc_exotic_margin">' . esc_html__('Exotic Filament Margin', 'printed-product-customizer') . '</label></th>';
+    echo '<td><input type="number" step="any" id="fpc_exotic_margin" name="fpc_exotic_margin" value="' . esc_attr($exotic_margin) . '"></td></tr>';
     if ($service_acc) {
         echo '<tr><th>' . esc_html__('Service Account Email', 'printed-product-customizer') . '</th>';
         echo '<td><input type="text" class="regular-text" readonly value="' . esc_attr($service_acc) . '"></td></tr>';
