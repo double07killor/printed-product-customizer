@@ -96,6 +96,14 @@ function fpc_filament_groups_product_data_panel() {
                             <select class="fpc-filament-blacklist wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[__INDEX__][filament_blacklist][]"></select>
                         </p>
                         <p class="form-field">
+                            <label><?php _e('Exempt all Filaments', 'printed-product-customizer'); ?></label>
+                            <input type="checkbox" class="fpc-exempt-all" name="fpc_filament_groups[__INDEX__][exempt_all_filaments]" value="1" />
+                        </p>
+                        <p class="form-field fpc-exempt-filaments-field">
+                            <label><?php _e('Exempt Filaments', 'printed-product-customizer'); ?></label>
+                            <select class="fpc-exempt-filaments wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[__INDEX__][exempt_filaments][]"></select>
+                        </p>
+                        <p class="form-field">
                             <label><?php _e('Base Grams', 'printed-product-customizer'); ?></label>
                             <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][base_grams]" />
                         </p>
@@ -135,6 +143,9 @@ function fpc_filament_groups_product_data_panel() {
                             });
                             $filtered_no_blacklist = array_filter($filtered, function($item, $slug) use ($blacklist) {
                                 return !in_array($slug, $blacklist, true);
+                            }, ARRAY_FILTER_USE_BOTH);
+                            $allowed_options = empty($whitelist) ? $filtered_no_blacklist : array_filter($filtered_no_blacklist, function($item, $slug) use ($whitelist) {
+                                return in_array($slug, $whitelist, true);
                             }, ARRAY_FILTER_USE_BOTH);
                             ?>
                             <p class="form-field">
@@ -180,6 +191,18 @@ function fpc_filament_groups_product_data_panel() {
                                 <select class="fpc-filament-blacklist wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][filament_blacklist][]">
                                     <?php foreach ($filtered as $slug => $item) : ?>
                                         <option value="<?php echo esc_attr($slug); ?>" <?php selected(in_array($slug, $blacklist, true)); ?>><?php echo esc_html($slug); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </p>
+                            <p class="form-field">
+                                <label><?php _e('Exempt all Filaments', 'printed-product-customizer'); ?></label>
+                                <input type="checkbox" class="fpc-exempt-all" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][exempt_all_filaments]" value="1" <?php checked(!empty($group['exempt_all_filaments'])); ?> />
+                            </p>
+                            <p class="form-field fpc-exempt-filaments-field">
+                                <label><?php _e('Exempt Filaments', 'printed-product-customizer'); ?></label>
+                                <select class="fpc-exempt-filaments wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][exempt_filaments][]">
+                                    <?php $exempt = $group['exempt_filaments'] ?? []; foreach ($allowed_options as $slug => $item) : ?>
+                                        <option value="<?php echo esc_attr($slug); ?>" <?php selected(in_array($slug, $exempt, true)); ?>><?php echo esc_html($slug); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </p>
@@ -234,6 +257,8 @@ function fpc_filament_groups_save($post_id) {
                 'materials'       => array_map('sanitize_text_field', $group['materials'] ?? []),
                 'filament_whitelist' => array_map('sanitize_text_field', $group['filament_whitelist'] ?? []),
                 'filament_blacklist' => array_map('sanitize_text_field', $group['filament_blacklist'] ?? []),
+                'exempt_all_filaments' => !empty($group['exempt_all_filaments']) ? 1 : 0,
+                'exempt_filaments' => array_map('sanitize_text_field', $group['exempt_filaments'] ?? []),
                 'allow_override'  => !empty($group['allow_override']) ? 1 : 0,
                 'override_message'=> sanitize_text_field($group['override_message'] ?? ''),
                 'override_surcharge' => floatval($group['override_surcharge'] ?? 0),
@@ -263,6 +288,8 @@ function fpc_filament_groups_save($post_id) {
             'materials'       => array_map('sanitize_text_field', $group['materials'] ?? []),
             'filament_whitelist' => array_map('sanitize_text_field', $group['filament_whitelist'] ?? []),
             'filament_blacklist' => array_map('sanitize_text_field', $group['filament_blacklist'] ?? []),
+            'exempt_all_filaments' => !empty($group['exempt_all_filaments']) ? 1 : 0,
+            'exempt_filaments' => array_map('sanitize_text_field', $group['exempt_filaments'] ?? []),
             'allow_override'  => !empty($group['allow_override']) ? 1 : 0,
             'override_message'=> sanitize_text_field($group['override_message'] ?? ''),
             'override_surcharge' => floatval($group['override_surcharge'] ?? 0),
