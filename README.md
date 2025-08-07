@@ -9,7 +9,7 @@ Initial scaffold for a WordPress/WooCommerce plugin that enables configuration o
   - Filament Groups
   - Subgroups
   - 3MF Body Mapping
-  - Text Zones
+  - Design Zones
 - Basic variation pricing adjustment scaffold.
 
 ## Google Sheets Sync
