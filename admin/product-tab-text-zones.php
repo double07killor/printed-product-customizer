@@ -141,6 +141,9 @@ function fpc_text_zones_save($post_id) {
     if (isset($_POST['fpc_text_zones']) && is_array($_POST['fpc_text_zones'])) {
         $zones = [];
         foreach ($_POST['fpc_text_zones'] as $zone) {
+            if (empty($zone['label']) && empty($zone['key']) && empty($zone['body'])) {
+                continue;
+            }
             $zones[] = [
                 'label'           => sanitize_text_field($zone['label'] ?? ''),
                 'key'             => sanitize_title($zone['key'] ?? ''),
@@ -181,7 +184,11 @@ function fpc_text_zones_save($post_id) {
                 'changeover_fee'  => floatval($zone['changeover_fee'] ?? 0),
             ];
         }
-        update_post_meta($post_id, '_fpc_text_zones', $zones);
+        if (!empty($zones)) {
+            update_post_meta($post_id, '_fpc_text_zones', $zones);
+        } else {
+            delete_post_meta($post_id, '_fpc_text_zones');
+        }
     } else {
         delete_post_meta($post_id, '_fpc_text_zones');
     }

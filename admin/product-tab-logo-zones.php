@@ -178,9 +178,15 @@ function fpc_logo_zones_save($post_id) {
     if (isset($_POST['fpc_logo_zones']) && is_array($_POST['fpc_logo_zones'])) {
         $zones = [];
         foreach ($_POST['fpc_logo_zones'] as $zone) {
+            if (empty($zone['label']) && empty($zone['key']) && empty($zone['body'])) {
+                continue;
+            }
             $price_adjust = [];
             if (!empty($zone['price_adjust']) && is_array($zone['price_adjust'])) {
                 foreach ($zone['price_adjust'] as $pa) {
+                    if (empty($pa['logo']) && $pa['price'] === '') {
+                        continue;
+                    }
                     $price_adjust[] = [
                         'logo'  => sanitize_text_field($pa['logo'] ?? ''),
                         'price' => floatval($pa['price'] ?? 0),
@@ -190,6 +196,9 @@ function fpc_logo_zones_save($post_id) {
             $options = [];
             if (!empty($zone['options']) && is_array($zone['options'])) {
                 foreach ($zone['options'] as $op) {
+                    if (empty($op['logo'])) {
+                        continue;
+                    }
                     $options[] = [
                         'logo'     => sanitize_text_field($op['logo'] ?? ''),
                         'rotation' => floatval($op['rotation'] ?? 0),
@@ -255,7 +264,11 @@ function fpc_logo_zones_save($post_id) {
                 ],
             ];
         }
-        update_post_meta($post_id, '_fpc_logo_zones', $zones);
+        if (!empty($zones)) {
+            update_post_meta($post_id, '_fpc_logo_zones', $zones);
+        } else {
+            delete_post_meta($post_id, '_fpc_logo_zones');
+        }
     } else {
         delete_post_meta($post_id, '_fpc_logo_zones');
     }
