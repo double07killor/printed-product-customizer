@@ -78,6 +78,9 @@ function fpc_3mf_mapping_product_data_panel() {
 
 add_action('woocommerce_process_product_meta', 'fpc_3mf_mapping_save');
 function fpc_3mf_mapping_save($post_id) {
+    $existing_files = get_post_meta($post_id, '_fpc_3mf_files', true);
+    $existing_files = is_array($existing_files) ? $existing_files : [];
+
     if (!empty($_FILES['fpc_3mf_files']['name'][0])) {
         $uploaded = [];
         require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -108,11 +111,16 @@ function fpc_3mf_mapping_save($post_id) {
             }
         }
         if ($uploaded) {
-            update_post_meta($post_id, '_fpc_3mf_files', $uploaded);
+            $existing_files = array_merge($existing_files, $uploaded);
+            update_post_meta($post_id, '_fpc_3mf_files', $existing_files);
         }
     }
+
+    // Parse all attached 3MF files to extract body names.
+    $bodies = fpc_3mf_collect_bodies($existing_files);
+
+    $assignments = [];
     if (isset($_POST['fpc_body_assignments']) && is_array($_POST['fpc_body_assignments'])) {
-        $assignments = [];
         foreach ($_POST['fpc_body_assignments'] as $as) {
             if (empty($as['body'])) {
                 continue;
@@ -122,8 +130,65 @@ function fpc_3mf_mapping_save($post_id) {
                 'subgroup' => sanitize_text_field($as['subgroup'] ?? ''),
             ];
         }
+    }
+
+    // Ensure all bodies from the 3MF files exist in assignments.
+    foreach ($bodies as $body_name) {
+        $found = false;
+        foreach ($assignments as $as) {
+            if ($as['body'] === $body_name) {
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            $assignments[] = [
+                'body'     => $body_name,
+                'subgroup' => '',
+            ];
+        }
+    }
+
+    if (!empty($assignments)) {
         update_post_meta($post_id, '_fpc_body_assignments', $assignments);
     } else {
         delete_post_meta($post_id, '_fpc_body_assignments');
     }
+}
+
+function fpc_3mf_collect_bodies($attachment_ids) {
+    $bodies = [];
+    foreach ($attachment_ids as $id) {
+        $file = get_attached_file($id);
+        if ($file && file_exists($file)) {
+            $bodies = array_merge($bodies, fpc_3mf_parse_file($file));
+        }
+    }
+    return array_values(array_unique($bodies));
+}
+
+function fpc_3mf_parse_file($file_path) {
+    $result = [];
+    $zip = new ZipArchive();
+    if ($zip->open($file_path) === true) {
+        $xml = $zip->getFromName('3D/3dmodel.model');
+        if ($xml !== false) {
+            $model = simplexml_load_string($xml);
+            if ($model !== false) {
+                // Register default namespace for XPath queries.
+                $model->registerXPathNamespace('m', 'http://schemas.microsoft.com/3dmanufacturing/core/2015/02');
+                $objects = $model->xpath('//m:object');
+                if (is_array($objects)) {
+                    foreach ($objects as $obj) {
+                        $name = (string)$obj['name'];
+                        if ($name !== '') {
+                            $result[] = $name;
+                        }
+                    }
+                }
+            }
+        }
+        $zip->close();
+    }
+    return $result;
 }
