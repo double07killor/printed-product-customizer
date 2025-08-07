@@ -1,5 +1,4 @@
 jQuery(function($){
-    console.log('Printed Product Customizer admin loaded');
 
     function initTagInputs($inputs){
         $inputs.each(function(){
