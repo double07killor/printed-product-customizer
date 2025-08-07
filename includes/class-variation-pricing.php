@@ -59,14 +59,33 @@ class FPC_Variation_Pricing {
 
         $unique = [];
         $exempt_slugs = [];
+        $surcharges = [];
+        $inventory = get_option('fpc_filament_inventory', []);
+        $margin    = floatval(get_option('fpc_exotic_margin', 0));
 
         foreach ($cart->get_cart() as $cart_item) {
             $product_id = $cart_item['product_id'] ?? 0;
             $groups = FPC_Product_Config::get_filament_groups($product_id);
+            $subgroups = FPC_Product_Config::get_subgroups($product_id);
             $selected = $cart_item['fpc_filaments'] ?? [];
             if (!is_array($groups)) {
                 continue;
             }
+
+            $group_base = [];
+            if (is_array($subgroups)) {
+                foreach ($subgroups as $sg) {
+                    $allowed = $sg['allowed'] ?? [];
+                    $base    = floatval($sg['base_grams'] ?? 0);
+                    foreach ($allowed as $gkey) {
+                        if (!isset($group_base[$gkey])) {
+                            $group_base[$gkey] = 0;
+                        }
+                        $group_base[$gkey] += $base;
+                    }
+                }
+            }
+
             foreach ($groups as $group) {
                 $exempt_slugs = array_merge($exempt_slugs, $group['exempt_filaments'] ?? []);
                 if (!empty($group['exempt_all_filaments'])) {
@@ -77,10 +96,30 @@ class FPC_Variation_Pricing {
                     continue;
                 }
                 $slug = $selected[$key] ?? '';
-                if (!$slug) {
-                    continue;
+                if ($slug) {
+                    $unique[$slug] = true;
                 }
-                $unique[$slug] = true;
+
+                if ($slug && !empty($group['apply_exotic_fee'])) {
+                    $base_g  = $group_base[$key] ?? 0;
+                    $waste_g = floatval($group['waste_grams'] ?? 0);
+                    $total_g = $base_g + $waste_g;
+                    $max_price = floatval($group['max_price_per_kg'] ?? $group['max_price'] ?? 0);
+                    if ($total_g > 0 && $max_price > 0) {
+                        $price_per_kg = floatval($inventory[$slug]['price_per_kg'] ?? 0);
+                        $delta = $price_per_kg - $max_price;
+                        if ($delta > 0) {
+                            $surcharge = ceil(($total_g / 1000) * $delta * (1 + $margin));
+                            if ($surcharge > 0) {
+                                $qty = $cart_item['quantity'] ?? 1;
+                                if (!isset($surcharges[$slug])) {
+                                    $surcharges[$slug] = 0;
+                                }
+                                $surcharges[$slug] += $surcharge * $qty;
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -89,6 +128,12 @@ class FPC_Variation_Pricing {
         $fee_per_change = floatval(get_option('fpc_filament_change_fee', 0));
         if ($fee_per_change > 0 && $count > 1) {
             $cart->add_fee(__('Filament Change Fee', 'printed-product-customizer'), ($count - 1) * $fee_per_change);
+        }
+
+        foreach ($surcharges as $slug => $fee) {
+            if ($fee > 0) {
+                $cart->add_fee(sprintf(__('Exotic Filament Surcharge (%s)', 'printed-product-customizer'), $slug), $fee);
+            }
         }
     }
 }

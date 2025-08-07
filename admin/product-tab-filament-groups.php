@@ -104,16 +104,16 @@ function fpc_filament_groups_product_data_panel() {
                             <select class="fpc-exempt-filaments wc-enhanced-select" multiple="multiple" style="width:100%;" name="fpc_filament_groups[__INDEX__][exempt_filaments][]"></select>
                         </p>
                         <p class="form-field">
-                            <label><?php _e('Base Grams', 'printed-product-customizer'); ?></label>
-                            <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][base_grams]" />
-                        </p>
-                        <p class="form-field">
                             <label><?php _e('Waste Grams', 'printed-product-customizer'); ?></label>
                             <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][waste_grams]" />
                         </p>
                         <p class="form-field">
-                            <label><?php _e('Max Price/kg before surcharge', 'printed-product-customizer'); ?></label>
-                            <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][max_price]" />
+                            <label><?php _e('Apply Exotic Surcharge', 'printed-product-customizer'); ?></label>
+                            <input type="checkbox" name="fpc_filament_groups[__INDEX__][apply_exotic_fee]" value="1" />
+                        </p>
+                        <p class="form-field">
+                            <label><?php _e('Max Free Price/kg', 'printed-product-customizer'); ?></label>
+                            <input type="number" step="any" class="short" name="fpc_filament_groups[__INDEX__][max_price_per_kg]" />
                         </p>
                         <p class="form-field fpc-additional-fee-field" style="display:none;">
                             <label><?php _e('Additional Group Fee', 'printed-product-customizer'); ?></label>
@@ -211,16 +211,16 @@ function fpc_filament_groups_product_data_panel() {
                                 </select>
                             </p>
                             <p class="form-field">
-                                <label><?php _e('Base Grams', 'printed-product-customizer'); ?></label>
-                                <input type="number" step="any" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][base_grams]" value="<?php echo esc_attr($group['base_grams'] ?? ''); ?>" />
-                            </p>
-                            <p class="form-field">
                                 <label><?php _e('Waste Grams', 'printed-product-customizer'); ?></label>
                                 <input type="number" step="any" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][waste_grams]" value="<?php echo esc_attr($group['waste_grams'] ?? ''); ?>" />
                             </p>
                             <p class="form-field">
-                                <label><?php _e('Max Price/kg before surcharge', 'printed-product-customizer'); ?></label>
-                                <input type="number" step="any" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][max_price]" value="<?php echo esc_attr($group['max_price'] ?? ''); ?>" />
+                                <label><?php _e('Apply Exotic Surcharge', 'printed-product-customizer'); ?></label>
+                                <input type="checkbox" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][apply_exotic_fee]" value="1" <?php checked(!empty($group['apply_exotic_fee'])); ?> />
+                            </p>
+                            <p class="form-field">
+                                <label><?php _e('Max Free Price/kg', 'printed-product-customizer'); ?></label>
+                                <input type="number" step="any" class="short" name="fpc_filament_groups[<?php echo esc_attr($index); ?>][max_price_per_kg]" value="<?php echo esc_attr($group['max_price_per_kg'] ?? $group['max_price'] ?? ''); ?>" />
                             </p>
                             <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                         </div>
@@ -266,9 +266,9 @@ function fpc_filament_groups_save($post_id) {
                 'allow_override'  => !empty($group['allow_override']) ? 1 : 0,
                 'override_message'=> sanitize_text_field($group['override_message'] ?? ''),
                 'override_surcharge' => floatval($group['override_surcharge'] ?? 0),
-                'base_grams'      => floatval($group['base_grams'] ?? 0),
                 'waste_grams'     => floatval($group['waste_grams'] ?? 0),
-                'max_price'       => floatval($group['max_price'] ?? 0),
+                'apply_exotic_fee'=> !empty($group['apply_exotic_fee']) ? 1 : 0,
+                'max_price_per_kg'=> floatval($group['max_price_per_kg'] ?? $group['max_price'] ?? 0),
             ];
         }
         update_post_meta($post_id, '_fpc_filament_groups', $groups);
@@ -297,9 +297,9 @@ function fpc_filament_groups_save($post_id) {
             'allow_override'  => !empty($group['allow_override']) ? 1 : 0,
             'override_message'=> sanitize_text_field($group['override_message'] ?? ''),
             'override_surcharge' => floatval($group['override_surcharge'] ?? 0),
-            'base_grams'      => floatval($group['base_grams'] ?? 0),
             'waste_grams'     => floatval($group['waste_grams'] ?? 0),
-            'max_price'       => floatval($group['max_price'] ?? 0),
+            'apply_exotic_fee'=> !empty($group['apply_exotic_fee']) ? 1 : 0,
+            'max_price_per_kg'=> floatval($group['max_price_per_kg'] ?? $group['max_price'] ?? 0),
             'additional_group_fee' => floatval($group['additional_group_fee'] ?? 0),
         ];
         update_post_meta($post_id, '_fpc_additional_group_rules', $rules);

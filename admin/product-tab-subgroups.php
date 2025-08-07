@@ -51,6 +51,10 @@ function fpc_subgroups_product_data_panel() {
                         <label><?php _e('Allow Additional Groups', 'printed-product-customizer'); ?></label>
                         <input type="checkbox" name="fpc_subgroups[__INDEX__][allow_additional]" value="1" />
                     </p>
+                    <p class="form-field">
+                        <label><?php _e('Base Grams', 'printed-product-customizer'); ?></label>
+                        <input type="number" step="any" class="short" name="fpc_subgroups[__INDEX__][base_grams]" />
+                    </p>
                     <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                 </div>
                 <?php foreach ($subgroups as $index => $sg) : ?>
@@ -71,6 +75,10 @@ function fpc_subgroups_product_data_panel() {
                         <p class="form-field">
                             <label><?php _e('Allow Additional Groups', 'printed-product-customizer'); ?></label>
                             <input type="checkbox" name="fpc_subgroups[<?php echo esc_attr($index); ?>][allow_additional]" value="1" <?php checked(!empty($sg['allow_additional'])); ?> />
+                        </p>
+                        <p class="form-field">
+                            <label><?php _e('Base Grams', 'printed-product-customizer'); ?></label>
+                            <input type="number" step="any" class="short" name="fpc_subgroups[<?php echo esc_attr($index); ?>][base_grams]" value="<?php echo esc_attr($sg['base_grams'] ?? ''); ?>" />
                         </p>
                         <p><button type="button" class="button fpc-repeatable-remove"><?php _e('Remove', 'printed-product-customizer'); ?></button></p>
                     </div>
@@ -94,6 +102,7 @@ function fpc_subgroups_save($post_id) {
                 'key'             => sanitize_title($sg['key'] ?? ''),
                 'allowed'         => $allowed,
                 'allow_additional'=> !empty($sg['allow_additional']) ? 1 : 0,
+                'base_grams'      => floatval($sg['base_grams'] ?? 0),
             ];
         }
         update_post_meta($post_id, '_fpc_subgroups', $subgroups);
