@@ -37,7 +37,10 @@ function fpc_3mf_mapping_product_data_panel() {
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
-            <p><button type="button" class="button" id="fpc-save-3mf"><?php _e('Save 3MF Files', 'printed-product-customizer'); ?></button></p>
+            <p>
+                <button type="button" class="button" id="fpc-save-3mf"><?php _e('Save 3MF Files', 'printed-product-customizer'); ?></button>
+                <button type="button" class="button" id="fpc-update-bodies"><?php _e('Update Bodies', 'printed-product-customizer'); ?></button>
+            </p>
             <div class="fpc-save-notice" style="display:none;"></div>
         </div>
         <div class="options_group fpc-repeatable-wrapper">
@@ -194,6 +197,7 @@ function fpc_3mf_mapping_save($post_id) {
 }
 
 add_action('wp_ajax_fpc_save_3mf_files', 'fpc_3mf_ajax_save_files');
+add_action('wp_ajax_fpc_update_bodies', 'fpc_3mf_ajax_update_bodies');
 function fpc_3mf_ajax_save_files() {
     if (!current_user_can('edit_products')) {
         wp_send_json_error(['message' => __('Permission denied', 'printed-product-customizer')]);
@@ -268,6 +272,48 @@ function fpc_3mf_ajax_save_files() {
 
     wp_send_json_success([
         'message'     => __('3MF files saved', 'printed-product-customizer'),
+        'assignments' => $assignments,
+    ]);
+}
+
+function fpc_3mf_ajax_update_bodies() {
+    if (!current_user_can('edit_products')) {
+        wp_send_json_error(['message' => __('Permission denied', 'printed-product-customizer')]);
+    }
+
+    $post_id = intval($_POST['post_id']);
+
+    $existing_files = get_post_meta($post_id, '_fpc_3mf_files', true);
+    $existing_files = is_array($existing_files) ? $existing_files : [];
+
+    $bodies = fpc_3mf_collect_bodies($existing_files);
+
+    $assignments = get_post_meta($post_id, '_fpc_body_assignments', true);
+    $assignments = is_array($assignments) ? $assignments : [];
+
+    foreach ($bodies as $body_name) {
+        $found = false;
+        foreach ($assignments as $as) {
+            if ($as['body'] === $body_name) {
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            $assignments[] = [
+                'body'            => $body_name,
+                'subgroup'        => '',
+                'no_visualization'=> '',
+                'non_exported'    => '',
+                'finish'          => '',
+            ];
+        }
+    }
+
+    update_post_meta($post_id, '_fpc_body_assignments', $assignments);
+
+    wp_send_json_success([
+        'message'     => __('Bodies updated', 'printed-product-customizer'),
         'assignments' => $assignments,
     ]);
 }

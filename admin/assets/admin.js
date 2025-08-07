@@ -280,5 +280,40 @@ jQuery(function($){
             }
         });
     });
+
+    $('#fpc-update-bodies').on('click', function(e){
+        e.preventDefault();
+        var btn = $(this);
+        var panel = $('#fpc_3mf_mapping_panel');
+        var formData = new FormData();
+        formData.append('action', 'fpc_update_bodies');
+        formData.append('post_id', $('#post_ID').val());
+        btn.prop('disabled', true);
+        panel.find('.fpc-save-notice').hide();
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(resp){
+                btn.prop('disabled', false);
+                if(resp.success){
+                    var container = panel.find('.fpc-repeatable-container');
+                    container.find('.fpc-repeatable-row').not('.fpc-template').remove();
+                    $.each(resp.data.assignments, function(i, as){
+                        addRow(container, as);
+                    });
+                    panel.find('.fpc-save-notice').text(resp.data.message).show();
+                } else {
+                    panel.find('.fpc-save-notice').text(resp.data && resp.data.message ? resp.data.message : 'Error').show();
+                }
+            },
+            error: function(){
+                btn.prop('disabled', false);
+                panel.find('.fpc-save-notice').text('Error').show();
+            }
+        });
+    });
     initTagInputs($('.fpc-tag-input'));
 });
