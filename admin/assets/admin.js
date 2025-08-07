@@ -125,6 +125,7 @@ jQuery(function($){
         template.attr('data-default-title', label);
         template.find('.fpc-group-title').text(label);
         template.find('.fpc-repeatable-remove').remove();
+        template.find('.fpc-additional-fee-field').show();
         template.find(':input').each(function(){
             var name = $(this).attr('name');
             if(name){
