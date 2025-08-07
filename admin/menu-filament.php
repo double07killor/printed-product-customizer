@@ -17,60 +17,6 @@ function fpc_register_filament_menu() {
 }
 
 /**
- * Extract the spreadsheet ID and gid from a Google Sheets URL.
- */
-function fpc_parse_google_sheet_url($url) {
-    $sheet_id = '';
-    $gid      = '';
-
-    if (preg_match('#/d/([a-zA-Z0-9-_]+)#', $url, $matches)) {
-        $sheet_id = $matches[1];
-    }
-    if (preg_match('#gid=([0-9]+)#', $url, $matches)) {
-        $gid = $matches[1];
-    }
-
-    return [
-        'sheet_id' => $sheet_id,
-        'gid'      => $gid,
-    ];
-}
-
-/**
- * Look up the sheet (tab) title using a spreadsheet ID, gid, and API key.
- */
-function fpc_get_sheet_title_from_gid($sheet_id, $gid, $api_key) {
-    if (empty($sheet_id) || empty($gid) || empty($api_key)) {
-        return '';
-    }
-
-    $url = sprintf(
-        'https://sheets.googleapis.com/v4/spreadsheets/%s?fields=sheets.properties&key=%s',
-        rawurlencode($sheet_id),
-        rawurlencode($api_key)
-    );
-
-    $response = wp_remote_get($url);
-    if (is_wp_error($response)) {
-        return '';
-    }
-
-    $data = json_decode(wp_remote_retrieve_body($response), true);
-    if (empty($data['sheets'])) {
-        return '';
-    }
-
-    foreach ($data['sheets'] as $sheet) {
-        $props = $sheet['properties'] ?? [];
-        if ((string) ($props['sheetId'] ?? '') === (string) $gid) {
-            return $props['title'] ?? '';
-        }
-    }
-
-    return '';
-}
-
-/**
  * Render the Filament Inventory admin page.
  */
 function fpc_render_filament_inventory_page() {
@@ -80,21 +26,34 @@ function fpc_render_filament_inventory_page() {
 
     // Save settings
     if (isset($_POST['fpc_save_filament_settings']) && check_admin_referer('fpc_save_filament_settings')) {
-        $api_key   = sanitize_text_field($_POST['fpc_google_api_key'] ?? '');
         $sheet_url = sanitize_text_field($_POST['fpc_google_sheet_url'] ?? '');
 
-        update_option('fpc_google_api_key', $api_key);
         update_option('fpc_google_sheet_url', $sheet_url);
 
-        $parsed    = fpc_parse_google_sheet_url($sheet_url);
-        $sheet_id  = $parsed['sheet_id'] ?? '';
-        $gid       = $parsed['gid'] ?? '';
+        $parts = $sheet_url ? fpc_parse_sheet_url($sheet_url) : false;
+        if ($parts) {
+            update_option('fpc_google_sheet_id', $parts[0]);
+            update_option('fpc_google_sheet_tab', $parts[1]);
+        } else {
+            update_option('fpc_google_sheet_id', '');
+            update_option('fpc_google_sheet_tab', '');
+        }
 
-        update_option('fpc_google_sheet_id', $sheet_id);
-        $sheet_title = fpc_get_sheet_title_from_gid($sheet_id, $gid, $api_key);
-        update_option('fpc_google_sheet_range', $sheet_title);
+        if (!empty($_FILES['fpc_google_json']['tmp_name'])) {
+            $uploads = wp_upload_dir();
+            $dir     = trailingslashit($uploads['basedir']) . 'fpc-filament-sync';
+            wp_mkdir_p($dir);
+            $dest = $dir . '/service-account.json';
+            move_uploaded_file($_FILES['fpc_google_json']['tmp_name'], $dest);
+            @chmod($dest, 0600);
+            update_option('fpc_google_json_path', $dest);
+        }
 
-        echo '<div class="updated"><p>' . esc_html__('Settings saved.', 'printed-product-customizer') . '</p></div>';
+        if ($sheet_url && !$parts) {
+            echo '<div class="error"><p>' . esc_html__('Invalid sheet URL format. Please use the full Google Sheets link.', 'printed-product-customizer') . '</p></div>';
+        } else {
+            echo '<div class="updated"><p>' . esc_html__('Settings saved.', 'printed-product-customizer') . '</p></div>';
+        }
     }
 
     // Handle manual sync
@@ -102,28 +61,61 @@ function fpc_render_filament_inventory_page() {
         $sync   = new FPC_Filament_Sync();
         $result = $sync->sync();
         if (is_wp_error($result)) {
-            echo '<div class="error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
+            $message = $result->get_error_message();
+            switch ($result->get_error_code()) {
+                case 'missing_key':
+                    $message .= ' ' . __('Upload your Google API JSON key and try again.', 'printed-product-customizer');
+                    break;
+                case 'invalid_key':
+                    $message .= ' ' . __('Verify that the JSON credentials are correct.', 'printed-product-customizer');
+                    break;
+                case 'no_token':
+                    $message .= ' ' . __('Authentication with Google failed.', 'printed-product-customizer');
+                    break;
+                case 'fpc_missing_setup':
+                case 'missing_setup':
+                    $message .= ' ' . __('Check that the sheet URL and tab settings are saved correctly.', 'printed-product-customizer');
+                    break;
+                case 'no_data':
+                    $message .= ' ' . __('Ensure the sheet has data and try again.', 'printed-product-customizer');
+                    break;
+                case 'api_error':
+                    $message .= ' ' . __('Please confirm the sheet ID and service account permissions.', 'printed-product-customizer');
+                    break;
+            }
+            echo '<div class="error"><p>' . esc_html($message) . '</p></div>';
         } else {
             echo '<div class="updated"><p>' . esc_html__('Inventory synced.', 'printed-product-customizer') . '</p></div>';
         }
     }
 
-    $api_key   = get_option('fpc_google_api_key', '');
-    $sheet_url = get_option('fpc_google_sheet_url', '');
-    $inventory = get_option('fpc_filament_inventory', []);
+    $sheet_url   = get_option('fpc_google_sheet_url', '');
+    $inventory   = get_option('fpc_filament_inventory', []);
+    $json_path   = get_option('fpc_google_json_path');
+    $service_acc = '';
+    if ($json_path && file_exists($json_path)) {
+        $config = json_decode(file_get_contents($json_path), true);
+        if (!empty($config['client_email'])) {
+            $service_acc = $config['client_email'];
+        }
+    }
 
     echo '<div class="wrap">';
     echo '<h1>' . esc_html__('Filament Inventory', 'printed-product-customizer') . '</h1>';
 
     // Settings form
-    echo '<form method="post" style="margin-bottom:20px;">';
+    echo '<form method="post" enctype="multipart/form-data" style="margin-bottom:20px;">';
     wp_nonce_field('fpc_save_filament_settings');
     echo '<h2>' . esc_html__('Google Sheets Settings', 'printed-product-customizer') . '</h2>';
     echo '<table class="form-table"><tbody>';
-    echo '<tr><th><label for="fpc_google_api_key">' . esc_html__('API Key', 'printed-product-customizer') . '</label></th>';
-    echo '<td><input type="text" class="regular-text" id="fpc_google_api_key" name="fpc_google_api_key" value="' . esc_attr($api_key) . '"></td></tr>';
     echo '<tr><th><label for="fpc_google_sheet_url">' . esc_html__('Sheet URL', 'printed-product-customizer') . '</label></th>';
     echo '<td><input type="text" class="regular-text" id="fpc_google_sheet_url" name="fpc_google_sheet_url" value="' . esc_attr($sheet_url) . '"></td></tr>';
+    echo '<tr><th><label for="fpc_google_json">' . esc_html__('Google API JSON Key', 'printed-product-customizer') . '</label></th>';
+    echo '<td><input type="file" id="fpc_google_json" name="fpc_google_json" accept="application/json"></td></tr>';
+    if ($service_acc) {
+        echo '<tr><th>' . esc_html__('Service Account Email', 'printed-product-customizer') . '</th>';
+        echo '<td><input type="text" class="regular-text" readonly value="' . esc_attr($service_acc) . '"></td></tr>';
+    }
     echo '</tbody></table>';
     echo '<p><input type="submit" name="fpc_save_filament_settings" class="button button-secondary" value="' . esc_attr__('Save Settings', 'printed-product-customizer') . '"></p>';
     echo '</form>';

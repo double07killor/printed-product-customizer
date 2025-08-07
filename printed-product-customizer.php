@@ -47,6 +47,9 @@ function fpc_init() {
     // Load localization
     load_plugin_textdomain('printed-product-customizer', false, dirname(plugin_basename(__FILE__)) . '/languages');
 
+    // Core helpers
+    require_once FPC_PLUGIN_DIR . 'includes/helpers.php';
+
     // Load admin menus
     if (is_admin()) {
         require_once FPC_PLUGIN_DIR . 'admin/menu-filament.php';
@@ -63,7 +66,6 @@ function fpc_init() {
     require_once FPC_PLUGIN_DIR . 'includes/class-product-config.php';
     require_once FPC_PLUGIN_DIR . 'includes/class-variation-pricing.php';
     require_once FPC_PLUGIN_DIR . 'includes/class-svg-logo.php';
-    require_once FPC_PLUGIN_DIR . 'includes/helpers.php';
 }
 
 // Enqueue admin scripts
@@ -81,3 +83,6 @@ function fpc_allow_svg_upload($mimes) {
     $mimes['svg'] = 'image/svg+xml';
     return $mimes;
 }
+
+// Prevent Jetpack from firing unnecessary API requests that clutter the console.
+add_filter('jetpack_just_in_time_msgs', '__return_false');

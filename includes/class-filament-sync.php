@@ -8,9 +8,8 @@ if (!defined('ABSPATH')) {
  */
 class FPC_Filament_Sync {
     /** Option names used for settings and storage */
-    const OPTION_API_KEY    = 'fpc_google_api_key';
     const OPTION_SHEET_ID   = 'fpc_google_sheet_id';
-    const OPTION_SHEET_RANGE = 'fpc_google_sheet_range';
+    const OPTION_SHEET_TAB  = 'fpc_google_sheet_tab';
     const OPTION_INVENTORY  = 'fpc_filament_inventory';
 
     /**
@@ -23,37 +22,19 @@ class FPC_Filament_Sync {
      */
     public function sync() {
         $sheet_id = get_option(self::OPTION_SHEET_ID);
-        $api_key  = get_option(self::OPTION_API_KEY);
-        $range    = get_option(self::OPTION_SHEET_RANGE, 'Sheet1');
+        $tab      = get_option(self::OPTION_SHEET_TAB);
 
-        if (empty($sheet_id) || empty($api_key)) {
+        if (empty($sheet_id) || empty($tab)) {
             return new WP_Error(
-                'fpc_missing_credentials',
-                __('Google Sheets credentials not configured.', 'printed-product-customizer')
+                'fpc_missing_setup',
+                __('Google Sheets settings not configured.', 'printed-product-customizer')
             );
         }
 
-        $url      = sprintf(
-            'https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s?key=%s',
-            rawurlencode($sheet_id),
-            rawurlencode($range),
-            rawurlencode($api_key)
-        );
-        $response = wp_remote_get($url);
-        if (is_wp_error($response)) {
-            return $response;
+        $rows = fpc_google_get_values($sheet_id, $tab);
+        if (is_wp_error($rows)) {
+            return $rows;
         }
-
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
-        if (empty($data['values'])) {
-            return new WP_Error(
-                'fpc_no_data',
-                __('No data returned from Google Sheets.', 'printed-product-customizer')
-            );
-        }
-
-        $rows    = $data['values'];
         $headers = array_map('sanitize_key', array_shift($rows));
         $inventory = [];
 
